@@ -1,42 +1,41 @@
-# poker
+# Friendly Poker
 
-This template should help get you started developing with Vue 3 in Vite.
+Тестовая версия приложения для управления сезоном Friendly Poker.
 
-## Recommended IDE Setup
+## Запуск локально
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+Требуется Node.js 22 или новее.
 
 ```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
+npm ci
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## Страницы
 
-```sh
-npm run build
-```
+- `/` — расписание, сезонный рейтинг и результаты на одной странице.
+- `/#/admin` — список турниров и создание турнира.
+- `/#/admin/tournaments/tournament-1` — настройки участников, взносов, докупок, мест и управление таймером.
+- `/#/screen/tournament-1` — табло для телевизора.
+
+Маршруты работают через Vue Router в hash-режиме, поэтому прямое открытие вложенных страниц совместимо с GitHub Pages.
+
+## Демо-данные и хранение
+
+Первый запуск создаёт локальный пример сезона по положению турнира. Изменения сохраняются в `localStorage` этого браузера. Открыв админку и табло в двух вкладках одного браузера, можно проверить таймер и обновление состояния.
+
+Это пока не подключено к Google Sheets: другой браузер или устройство не увидит локальные изменения. Для общего хранения потребуется добавить отдельный адаптер Google Sheets и настроить доступ к таблице.
+
+Таблица очков в `src/domain/rating.ts` повторяет положение как черновой вариант. Её формулу и правила равенства результатов согласуем позже.
+
+Чтобы вернуть исходные демонстрационные данные, открой `/admin` и нажми «Сбросить демо».
+
+## Публикация на GitHub Pages
+
+В репозитории уже добавлен GitHub Actions workflow `.github/workflows/deploy.yml`. После добавления проекта в GitHub:
+
+1. В настройках репозитория открой **Settings → Pages**.
+2. Выбери **Build and deployment → Source: GitHub Actions**.
+3. Отправь ветку `main` или `master` в GitHub либо запусти workflow вручную во вкладке **Actions**.
+
+Сборка автоматически использует имя репозитория как базовый путь, поэтому подходит и для адреса вида `username.github.io/repository/`.
