@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { finishTournament, findTournament, nextLevel, pauseTimer, startTimer, state, toggleParticipant } from '@/stores/poker'
+import { finishTournament, findTournament, googleSyncStatus, nextLevel, pauseTimer, startTimer, state, toggleParticipant } from '@/stores/poker'
 
 const route = useRoute()
 const tournament = computed(() => findTournament(String(route.params.id)))
@@ -65,7 +65,7 @@ function statusLabel(status: string) {
         <button class="button button-outline" :disabled="tournament.status === 'finished'" @click="nextLevel(tournament)">Следующий уровень</button>
         <button v-if="tournament.status !== 'finished'" class="button button-danger" @click="finishTournament(tournament)">Завершить турнир</button>
       </div>
-      <p class="fine-print">Таймер и текущий уровень отображаются на табло. В демо состояние синхронизируется между вкладками этого браузера.</p>
+      <p class="fine-print">Таймер и текущий уровень отображаются на табло. {{ googleSyncStatus === 'local' ? 'В локальном режиме синхронизация работает только между вкладками этого браузера.' : 'При подключённой Google Таблице данные обновляются на других устройствах примерно раз в 5 секунд.' }}</p>
     </section>
   </div>
   <div v-else class="empty-state"><strong>Турнир не найден</strong><RouterLink to="/admin" class="text-link">Вернуться к турнирам</RouterLink></div>

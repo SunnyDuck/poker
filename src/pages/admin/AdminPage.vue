@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { createTournament, resetDemo, state } from '@/stores/poker'
+import { createTournament, googleSyncStatus, resetDemo, state } from '@/stores/poker'
 
 const router = useRouter()
 function addTournament() {
@@ -17,10 +17,10 @@ function dateLabel(date: string) {
 
 <template>
   <div class="admin-page-head">
-    <div><div class="eyebrow">ДЕМО-РЕЖИМ</div><h1>Управление турнирами</h1><p class="muted">Изменения сохраняются в браузере и видны в соседних вкладках.</p></div>
+    <div><div class="eyebrow">СЕЗОН 1</div><h1>Управление турнирами</h1><p class="muted">{{ googleSyncStatus === 'local' ? 'Изменения сохраняются в этом браузере.' : 'Изменения синхронизируются с Google Таблицей.' }}</p></div>
     <button class="button button-dark" @click="addTournament">＋ Новый турнир</button>
   </div>
-  <div class="notice"><strong>Тестовые данные.</strong> Пока Google Таблицы не подключены, каждый браузер хранит свою копию турнира.</div>
+  <div v-if="googleSyncStatus === 'local'" class="notice"><strong>Локальный режим.</strong> Пока адрес Google Таблицы не настроен, изменения видны только в этом браузере.</div>
   <div class="admin-tournament-list">
     <article v-for="tournament in state.tournaments" :key="tournament.id" class="admin-tournament-card">
       <div class="tournament-card-top"><span class="status" :class="`status-${tournament.status}`">{{ statusLabel(tournament.status) }}</span><span class="muted">{{ dateLabel(tournament.date) }}</span></div>
