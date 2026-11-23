@@ -1,0 +1,94 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import {
+  connectGoogleAdmin,
+  disconnectGoogleAdmin,
+  googleAdminConnected,
+  googleSyncMessage,
+  googleSyncStatus,
+} from '@/stores/poker'
+import { getGoogleAdminKey, isGoogleSheetsConfigured } from '@/services/googleSheets'
+
+const adminKey = ref(getGoogleAdminKey())
+const configured = isGoogleSheetsConfigured()
+const busy = ref(false)
+const error = ref('')
+
+const statusLabel = computed(() => ({
+  local: 'Локальный режим',
+  connecting: 'Подключаем…',
+  'read-only': 'Google · просмотр',
+  connected: 'Google · запись включена',
+  saving: 'Сохраняем…',
+  error: 'Ошибка синхронизации',
+  conflict: 'Нужна проверка данных',
+}[googleSyncStatus.value]))
+
+async function connect() {
+  busy.value = true
+  error.value = ''
+  try {
+    await connectGoogleAdmin(adminKey.value)
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : 'Не удалось подключить Google Таблицу.'
+  } finally {
+    busy.value = false
+  }
+}
+
+function disconnect() {
+  disconnectGoogleAdmin()
+  adminKey.value = ''
+}
+</script>
+
+<template>
+  <section class="google-sync-panel" :class="`sync-${googleSyncStatus}`">
+    <div class="sync-panel-heading">
+      <div>
+        <strong>Общие данные</strong>
+        <span class="sync-status-label">{{ statusLabel }}</span>
+      </div>
+      <span class="sync-dot" aria-hidden="true"></span>
+    </div>
+
+    <template v-if="configured">
+      <p class="sync-description">{{ googleSyncMessage }}</p>
+      <form v-if="!googleAdminConnected" class="sync-key-form" @submit.prevent="connect">
+        <label class="field">Ключ записи из Apps Script
+          <input v-model="adminKey" type="password" autocomplete="current-password" placeholder="Вставьте ключ администратора">
+        </label>
+        <button class="button button-dark" :disabled="busy || !adminKey.trim()" type="submit">
+          {{ busy ? 'Проверяю…' : 'Включить запись' }}
+        </button>
+      </form>
+      <div v-else class="sync-key-actions">
+        <label class="field">Ключ администратора
+          <input v-model="adminKey" type="password" autocomplete="current-password" readonly>
+        </label>
+        <button class="text-button" type="button" @click="disconnect">Отключить запись</button>
+      </div>
+      <p v-if="error" class="sync-error" role="alert">{{ error }}</p>
+    </template>
+    <p v-else class="sync-description">Адрес Apps Script не задан. Пока приложение хранит данные в этом браузере.</p>
+  </section>
+</template>
+
+<style scoped>
+.google-sync-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:24px}
+.sync-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sync-panel-heading>div{display:flex;align-items:center;gap:10px}
+.sync-panel-heading strong{font-size:13px;color:var(--green)}
+.sync-status-label{font-size:11px;color:var(--muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#a3aaa5;flex:none}
+.sync-connected .sync-dot{background:#39815b}.sync-saving .sync-dot,.sync-connecting .sync-dot{background:#c08a25}.sync-error .sync-dot,.sync-conflict .sync-dot{background:#bd4c3e}
+.sync-description{margin:8px 0 0;font-size:11px;line-height:1.5;color:var(--muted)}
+.sync-key-form{display:flex;align-items:end;gap:12px;margin-top:10px}
+.sync-key-form .field,.sync-key-actions .field{flex:1;margin:0}
+.sync-key-form .field input,.sync-key-actions .field input{height:34px;font-size:12px}
+.sync-key-form .button{min-height:34px;white-space:nowrap}
+.sync-key-actions{display:flex;align-items:end;gap:12px;margin-top:10px}
+.sync-key-actions .text-button{font-size:11px;white-space:nowrap}
+.sync-error{margin:8px 0 0;color:#b0392d;font-size:11px}
+@media(max-width:600px){.sync-key-form,.sync-key-actions{align-items:stretch;flex-direction:column}.sync-key-form .button{align-self:flex-start}}
+</style>
