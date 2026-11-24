@@ -18,7 +18,10 @@ function dateLabel(date: string) {
 <template>
   <div class="admin-page-head">
     <div><div class="eyebrow">СЕЗОН 1</div><h1>Управление турнирами</h1><p class="muted">{{ googleSyncStatus === 'local' ? 'Изменения сохраняются в этом браузере.' : 'Изменения синхронизируются с Google Таблицей.' }}</p></div>
-    <button class="button button-dark" @click="addTournament">＋ Новый турнир</button>
+    <div class="admin-header-actions">
+      <RouterLink class="button button-outline" to="/admin/participants">Участники сезона</RouterLink>
+      <button class="button button-dark" @click="addTournament">＋ Новый турнир</button>
+    </div>
   </div>
   <div v-if="googleSyncStatus === 'local'" class="notice"><strong>Локальный режим.</strong> Пока адрес Google Таблицы не настроен, изменения видны только в этом браузере.</div>
   <div class="admin-tournament-list">

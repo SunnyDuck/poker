@@ -4,6 +4,7 @@ import PublicLayout from '@/layouts/PublicLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import HomePage from '@/pages/HomePage.vue'
 import AdminPage from '@/pages/admin/AdminPage.vue'
+import AdminParticipantsPage from '@/pages/admin/AdminParticipantsPage.vue'
 import AdminTournamentPage from '@/pages/admin/AdminTournamentPage.vue'
 import TournamentScreenPage from '@/pages/TournamentScreenPage.vue'
 
@@ -20,6 +21,7 @@ export const router = createRouter({
       component: AdminLayout,
       children: [
         { path: '', component: AdminPage },
+        { path: 'participants', component: AdminParticipantsPage },
         { path: 'tournaments/:id', component: AdminTournamentPage },
       ],
     },

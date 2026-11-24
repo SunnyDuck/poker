@@ -6,6 +6,7 @@ const adminKeyStorageKey = 'friendly-poker-admin-key'
 export interface GoogleStateSnapshot {
   state: DemoState | null
   revision: number
+  apiVersion: number
 }
 
 interface GoogleResponse extends GoogleStateSnapshot {
@@ -40,19 +41,55 @@ export function isGoogleSheetsConfigured(): boolean {
 }
 
 export function getGoogleAdminKey(): string {
+  let sessionKey = ''
   try {
-    return sessionStorage.getItem(adminKeyStorageKey) ?? ''
+    sessionKey = sessionStorage.getItem(adminKeyStorageKey) ?? ''
+  } catch {
+    // Fall back to persistent storage when session storage is unavailable.
+  }
+  if (sessionKey) return sessionKey
+
+  try {
+    return localStorage.getItem(adminKeyStorageKey) ?? ''
   } catch {
     return ''
   }
 }
 
-export function storeGoogleAdminKey(value: string): void {
+export function isGoogleAdminKeyRemembered(): boolean {
+  try {
+    return Boolean(localStorage.getItem(adminKeyStorageKey))
+  } catch {
+    return false
+  }
+}
+
+export function storeGoogleAdminKey(value: string, remember = false): void {
   try {
     if (value) sessionStorage.setItem(adminKeyStorageKey, value)
     else sessionStorage.removeItem(adminKeyStorageKey)
   } catch {
-    // The key remains usable for the current page even when session storage is disabled.
+    // Persistent storage may still be available below.
+  }
+
+  try {
+    if (value && remember) localStorage.setItem(adminKeyStorageKey, value)
+    else localStorage.removeItem(adminKeyStorageKey)
+  } catch {
+    // The key remains usable for the current page even when browser storage is disabled.
+  }
+}
+
+export function setGoogleAdminKeyRemembered(remember: boolean): void {
+  const key = getGoogleAdminKey()
+  try {
+    if (remember && key) localStorage.setItem(adminKeyStorageKey, key)
+    else {
+      if (key) sessionStorage.setItem(adminKeyStorageKey, key)
+      localStorage.removeItem(adminKeyStorageKey)
+    }
+  } catch {
+    // Keep the current session usable if persistent browser storage is unavailable.
   }
 }
 
@@ -63,7 +100,7 @@ export function readGoogleState(): Promise<GoogleStateSnapshot> {
   return new Promise((resolve, reject) => {
     const callbackName = `friendlyPokerRead${crypto.randomUUID().replaceAll('-', '')}`
     const script = document.createElement('script')
-    const timer = window.setTimeout(() => finish(new Error('Google Sheets read timed out')), 15_000)
+    const timer = window.setTimeout(() => finish(new Error('Не удалось дождаться ответа Google Таблицы.')), 45_000)
     let settled = false
 
     function cleanup() {
@@ -88,6 +125,7 @@ export function readGoogleState(): Promise<GoogleStateSnapshot> {
       finish(undefined, {
         state: response.state ?? null,
         revision: Number(response.revision) || 0,
+        apiVersion: Number(response.apiVersion) || 0,
       })
     }
 
@@ -138,8 +176,8 @@ export async function writeGoogleState(snapshot: DemoState, adminKey: string): P
 
       const timeout = window.setTimeout(() => {
         cleanup()
-        reject(new Error('Google Sheets write timed out'))
-      }, 15_000)
+        reject(new Error('Google Таблица не подтвердила запись вовремя. Проверяем, не завершилась ли она позже.'))
+      }, 90_000)
 
       function cleanup() {
         window.clearTimeout(timeout)

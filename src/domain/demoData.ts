@@ -28,12 +28,18 @@ function makeTournament(id: string, number: number, date: string, participantIds
     maxRebuys: 1,
     rebuyUntil: '19:30',
     participantIds,
+    initialDealerId: null,
     rebuys: {},
     places: {},
+    eliminatedInHand: {},
+    gameInitialized: false,
+    stacks: {},
+    hands: [],
     levels: seasonLevels.map((level) => ({ ...level })),
     currentLevel: 0,
     secondsRemaining: seasonLevels[0]!.minutes * 60,
     timerStartedAt: null,
+    startedAt: null,
   }
 }
 

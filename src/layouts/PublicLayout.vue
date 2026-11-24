@@ -11,6 +11,7 @@ function scrollTo(id: string) {
       <nav class="topnav" aria-label="Навигация по странице">
         <button @click="scrollTo('schedule')">Расписание</button>
         <button @click="scrollTo('rating')">Рейтинг</button>
+        <button @click="scrollTo('statistics')">Статистика</button>
         <button @click="scrollTo('results')">Результаты</button>
       </nav>
       <RouterLink class="button button-quiet" to="/admin">Админка</RouterLink>
