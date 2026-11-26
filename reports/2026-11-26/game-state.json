@@ -1,0 +1,3386 @@
+{
+  "players": [
+    {
+      "id": "player-1",
+      "name": "Алексей"
+    },
+    {
+      "id": "player-2",
+      "name": "Анна"
+    },
+    {
+      "id": "player-3",
+      "name": "Борис"
+    },
+    {
+      "id": "player-4",
+      "name": "Вика"
+    },
+    {
+      "id": "player-5",
+      "name": "Дмитрий"
+    },
+    {
+      "id": "player-6",
+      "name": "Екатерина"
+    },
+    {
+      "id": "player-7",
+      "name": "Илья"
+    },
+    {
+      "id": "player-8",
+      "name": "Мария"
+    },
+    {
+      "id": "player-9",
+      "name": "Никита"
+    },
+    {
+      "id": "player-10",
+      "name": "Ольга"
+    }
+  ],
+  "tournaments": [
+    {
+      "id": "tournament-1",
+      "title": "QA · 8 игроков · 26.11.2026",
+      "date": "2026-11-26",
+      "startTime": "18:00",
+      "status": "finished",
+      "buyIn": 500,
+      "startingStack": 2000,
+      "rebuyCost": 500,
+      "maxRebuys": 1,
+      "rebuyUntil": "23:59",
+      "participantIds": [
+        "player-1",
+        "player-2",
+        "player-3",
+        "player-4",
+        "player-5",
+        "player-6",
+        "player-7",
+        "player-8"
+      ],
+      "initialDealerId": "player-1",
+      "rebuys": {
+        "player-1": 0,
+        "player-2": 0,
+        "player-3": 0,
+        "player-4": 0,
+        "player-5": 0,
+        "player-6": 0,
+        "player-7": 0,
+        "player-8": 1
+      },
+      "places": {
+        "player-8": 8,
+        "player-7": 7,
+        "player-6": 6,
+        "player-5": 5,
+        "player-4": 4,
+        "player-3": 3,
+        "player-2": 2,
+        "player-1": 1
+      },
+      "eliminatedInHand": {
+        "player-8": 4,
+        "player-7": 5,
+        "player-6": 6,
+        "player-5": 7,
+        "player-4": 8,
+        "player-3": 9,
+        "player-2": 10
+      },
+      "gameInitialized": true,
+      "stacks": {
+        "player-1": 18000,
+        "player-2": 0,
+        "player-3": 0,
+        "player-4": 0,
+        "player-5": 0,
+        "player-6": 0,
+        "player-7": 0,
+        "player-8": 0
+      },
+      "hands": [
+        {
+          "number": 1,
+          "street": "river",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  50,
+                  50,
+                  50
+                ],
+                "flop": [
+                  50,
+                  0,
+                  0
+                ],
+                "turn": [
+                  50,
+                  0,
+                  0
+                ],
+                "river": [
+                  100,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  "call",
+                  "call"
+                ],
+                "flop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "call",
+                  null,
+                  null
+                ],
+                "river": [
+                  "call",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  25,
+                  50,
+                  75
+                ],
+                "flop": [
+                  50,
+                  0,
+                  0
+                ],
+                "turn": [
+                  50,
+                  0,
+                  0
+                ],
+                "river": [
+                  100,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  "call",
+                  "call"
+                ],
+                "flop": [
+                  "bet",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "bet",
+                  null,
+                  null
+                ],
+                "river": [
+                  "bet",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-3": {
+              "bets": {
+                "preflop": [
+                  50,
+                  50,
+                  50
+                ],
+                "flop": [
+                  50,
+                  0,
+                  0
+                ],
+                "turn": [
+                  50,
+                  0,
+                  0
+                ],
+                "river": [
+                  100,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  "call",
+                  "call"
+                ],
+                "flop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "call",
+                  null,
+                  null
+                ],
+                "river": [
+                  "call",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-4": {
+              "bets": {
+                "preflop": [
+                  50,
+                  50,
+                  50
+                ],
+                "flop": [
+                  50,
+                  0,
+                  0
+                ],
+                "turn": [
+                  50,
+                  0,
+                  0
+                ],
+                "river": [
+                  100,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  "raise",
+                  "raise"
+                ],
+                "flop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "call",
+                  null,
+                  null
+                ],
+                "river": [
+                  "call",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-5": {
+              "bets": {
+                "preflop": [
+                  50,
+                  50,
+                  50
+                ],
+                "flop": [
+                  50,
+                  0,
+                  0
+                ],
+                "turn": [
+                  50,
+                  0,
+                  0
+                ],
+                "river": [
+                  100,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  "call",
+                  "call"
+                ],
+                "flop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "call",
+                  null,
+                  null
+                ],
+                "river": [
+                  "call",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-6": {
+              "bets": {
+                "preflop": [
+                  50,
+                  50,
+                  50
+                ],
+                "flop": [
+                  50,
+                  0,
+                  0
+                ],
+                "turn": [
+                  50,
+                  0,
+                  0
+                ],
+                "river": [
+                  100,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  "call",
+                  "call"
+                ],
+                "flop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "call",
+                  null,
+                  null
+                ],
+                "river": [
+                  "call",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-7": {
+              "bets": {
+                "preflop": [
+                  50,
+                  50,
+                  50
+                ],
+                "flop": [
+                  50,
+                  0,
+                  0
+                ],
+                "turn": [
+                  50,
+                  0,
+                  0
+                ],
+                "river": [
+                  100,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  "call",
+                  "call"
+                ],
+                "flop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "call",
+                  null,
+                  null
+                ],
+                "river": [
+                  "call",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-8": {
+              "bets": {
+                "preflop": [
+                  50,
+                  50,
+                  50
+                ],
+                "flop": [
+                  50,
+                  0,
+                  0
+                ],
+                "turn": [
+                  50,
+                  0,
+                  0
+                ],
+                "river": [
+                  100,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  "call",
+                  "call"
+                ],
+                "flop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "call",
+                  null,
+                  null
+                ],
+                "river": [
+                  "call",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-1",
+            "smallBlind": "player-2",
+            "bigBlind": "player-3"
+          }
+        },
+        {
+          "number": 2,
+          "street": "river",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  100,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "flop": [
+                  "check",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "check",
+                  null,
+                  null
+                ],
+                "river": [
+                  "check",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  100,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "flop": [
+                  "check",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "check",
+                  null,
+                  null
+                ],
+                "river": [
+                  "check",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-3": {
+              "bets": {
+                "preflop": [
+                  50,
+                  50,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  "call",
+                  null
+                ],
+                "flop": [
+                  "check",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "check",
+                  null,
+                  null
+                ],
+                "river": [
+                  "check",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-4": {
+              "bets": {
+                "preflop": [
+                  100,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  "check",
+                  null
+                ],
+                "flop": [
+                  "check",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "check",
+                  null,
+                  null
+                ],
+                "river": [
+                  "check",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-5": {
+              "bets": {
+                "preflop": [
+                  100,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "flop": [
+                  "check",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "check",
+                  null,
+                  null
+                ],
+                "river": [
+                  "check",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-6": {
+              "bets": {
+                "preflop": [
+                  100,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "flop": [
+                  "check",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "check",
+                  null,
+                  null
+                ],
+                "river": [
+                  "check",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-7": {
+              "bets": {
+                "preflop": [
+                  100,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "flop": [
+                  "check",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "check",
+                  null,
+                  null
+                ],
+                "river": [
+                  "check",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            },
+            "player-8": {
+              "bets": {
+                "preflop": [
+                  100,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "call",
+                  null,
+                  null
+                ],
+                "flop": [
+                  "check",
+                  null,
+                  null
+                ],
+                "turn": [
+                  "check",
+                  null,
+                  null
+                ],
+                "river": [
+                  "check",
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-2",
+            "smallBlind": "player-3",
+            "bigBlind": "player-4"
+          }
+        },
+        {
+          "number": 3,
+          "street": "preflop",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  0,
+                  1550,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "call",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-3": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-4": {
+              "bets": {
+                "preflop": [
+                  50,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-5": {
+              "bets": {
+                "preflop": [
+                  100,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-6": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-7": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-8": {
+              "bets": {
+                "preflop": [
+                  0,
+                  1550,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "all-in",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-3",
+            "smallBlind": "player-4",
+            "bigBlind": "player-5"
+          }
+        },
+        {
+          "number": 4,
+          "street": "preflop",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  0,
+                  2000,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "call",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-3": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-4": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-5": {
+              "bets": {
+                "preflop": [
+                  75,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-6": {
+              "bets": {
+                "preflop": [
+                  150,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-7": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-8": {
+              "bets": {
+                "preflop": [
+                  0,
+                  2000,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "all-in",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-4",
+            "smallBlind": "player-5",
+            "bigBlind": "player-6"
+          }
+        },
+        {
+          "number": 5,
+          "street": "preflop",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  0,
+                  1550,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "raise",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-3": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-4": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-5": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-6": {
+              "bets": {
+                "preflop": [
+                  75,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-7": {
+              "bets": {
+                "preflop": [
+                  150,
+                  1400,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  "all-in",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-5",
+            "smallBlind": "player-6",
+            "bigBlind": "player-7"
+          }
+        },
+        {
+          "number": 6,
+          "street": "preflop",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  75,
+                  1250,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  "call",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  150,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-3": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-4": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-5": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-6": {
+              "bets": {
+                "preflop": [
+                  0,
+                  1325,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "all-in",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-6",
+            "smallBlind": "player-1",
+            "bigBlind": "player-2"
+          }
+        },
+        {
+          "number": 7,
+          "street": "preflop",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  0,
+                  1375,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "call",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  75,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-3": {
+              "bets": {
+                "preflop": [
+                  150,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-4": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-5": {
+              "bets": {
+                "preflop": [
+                  0,
+                  1375,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "all-in",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-1",
+            "smallBlind": "player-2",
+            "bigBlind": "player-3"
+          }
+        },
+        {
+          "number": 8,
+          "street": "preflop",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  0,
+                  1500,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "raise",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  0,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-3": {
+              "bets": {
+                "preflop": [
+                  75,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-4": {
+              "bets": {
+                "preflop": [
+                  150,
+                  1350,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  "all-in",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-2",
+            "smallBlind": "player-3",
+            "bigBlind": "player-4"
+          }
+        },
+        {
+          "number": 9,
+          "street": "preflop",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  75,
+                  1650,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  "call",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  150,
+                  0,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  null,
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": true,
+              "foldedOn": "preflop",
+              "takesPot": false
+            },
+            "player-3": {
+              "bets": {
+                "preflop": [
+                  0,
+                  1725,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  null,
+                  "all-in",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-3",
+            "smallBlind": "player-1",
+            "bigBlind": "player-2"
+          }
+        },
+        {
+          "number": 10,
+          "street": "preflop",
+          "players": {
+            "player-1": {
+              "bets": {
+                "preflop": [
+                  75,
+                  1500,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "small-blind",
+                  "raise",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": true
+            },
+            "player-2": {
+              "bets": {
+                "preflop": [
+                  150,
+                  1425,
+                  0
+                ],
+                "flop": [
+                  0,
+                  0,
+                  0
+                ],
+                "turn": [
+                  0,
+                  0,
+                  0
+                ],
+                "river": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "actions": {
+                "preflop": [
+                  "big-blind",
+                  "all-in",
+                  null
+                ],
+                "flop": [
+                  null,
+                  null,
+                  null
+                ],
+                "turn": [
+                  null,
+                  null,
+                  null
+                ],
+                "river": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              "folded": false,
+              "foldedOn": null,
+              "takesPot": false
+            }
+          },
+          "settled": true,
+          "roles": {
+            "dealer": "player-1",
+            "smallBlind": "player-1",
+            "bigBlind": "player-2"
+          }
+        }
+      ],
+      "levels": [
+        {
+          "small": 25,
+          "big": 50,
+          "minutes": 45
+        },
+        {
+          "small": 50,
+          "big": 100,
+          "minutes": 45
+        },
+        {
+          "small": 0,
+          "big": 0,
+          "minutes": 10,
+          "break": true
+        },
+        {
+          "small": 75,
+          "big": 150,
+          "minutes": 30
+        },
+        {
+          "small": 100,
+          "big": 200,
+          "minutes": 20
+        },
+        {
+          "small": 150,
+          "big": 300,
+          "minutes": 20
+        },
+        {
+          "small": 0,
+          "big": 0,
+          "minutes": 10,
+          "break": true
+        },
+        {
+          "small": 200,
+          "big": 400,
+          "minutes": 15
+        },
+        {
+          "small": 300,
+          "big": 600,
+          "minutes": 15
+        },
+        {
+          "small": 400,
+          "big": 800,
+          "minutes": 10
+        },
+        {
+          "small": 600,
+          "big": 1200,
+          "minutes": 10
+        },
+        {
+          "small": 800,
+          "big": 1600,
+          "minutes": 10
+        }
+      ],
+      "currentLevel": 3,
+      "secondsRemaining": 1800,
+      "timerStartedAt": null,
+      "startedAt": 1795690801000
+    },
+    {
+      "id": "tournament-2",
+      "title": "Игра 2",
+      "date": "2026-12-11",
+      "startTime": "18:00",
+      "status": "upcoming",
+      "buyIn": 300,
+      "startingStack": 1500,
+      "rebuyCost": 300,
+      "maxRebuys": 1,
+      "rebuyUntil": "19:30",
+      "participantIds": [
+        "player-1",
+        "player-2",
+        "player-3",
+        "player-4",
+        "player-5",
+        "player-6",
+        "player-7",
+        "player-8"
+      ],
+      "initialDealerId": null,
+      "rebuys": {},
+      "places": {},
+      "eliminatedInHand": {},
+      "gameInitialized": false,
+      "stacks": {},
+      "hands": [],
+      "levels": [
+        {
+          "small": 25,
+          "big": 50,
+          "minutes": 45
+        },
+        {
+          "small": 50,
+          "big": 100,
+          "minutes": 45
+        },
+        {
+          "small": 0,
+          "big": 0,
+          "minutes": 10,
+          "break": true
+        },
+        {
+          "small": 75,
+          "big": 150,
+          "minutes": 30
+        },
+        {
+          "small": 100,
+          "big": 200,
+          "minutes": 20
+        },
+        {
+          "small": 150,
+          "big": 300,
+          "minutes": 20
+        },
+        {
+          "small": 0,
+          "big": 0,
+          "minutes": 10,
+          "break": true
+        },
+        {
+          "small": 200,
+          "big": 400,
+          "minutes": 15
+        },
+        {
+          "small": 300,
+          "big": 600,
+          "minutes": 15
+        },
+        {
+          "small": 400,
+          "big": 800,
+          "minutes": 10
+        },
+        {
+          "small": 600,
+          "big": 1200,
+          "minutes": 10
+        },
+        {
+          "small": 800,
+          "big": 1600,
+          "minutes": 10
+        }
+      ],
+      "currentLevel": 0,
+      "secondsRemaining": 2700,
+      "timerStartedAt": null,
+      "startedAt": null
+    },
+    {
+      "id": "tournament-3",
+      "title": "Игра 3 · Финал",
+      "date": "2026-12-25",
+      "startTime": "18:00",
+      "status": "upcoming",
+      "buyIn": 300,
+      "startingStack": 1500,
+      "rebuyCost": 300,
+      "maxRebuys": 1,
+      "rebuyUntil": "19:30",
+      "participantIds": [
+        "player-1",
+        "player-2",
+        "player-3",
+        "player-4",
+        "player-5",
+        "player-6",
+        "player-7",
+        "player-8",
+        "player-9",
+        "player-10"
+      ],
+      "initialDealerId": null,
+      "rebuys": {},
+      "places": {},
+      "eliminatedInHand": {},
+      "gameInitialized": false,
+      "stacks": {},
+      "hands": [],
+      "levels": [
+        {
+          "small": 25,
+          "big": 50,
+          "minutes": 45
+        },
+        {
+          "small": 50,
+          "big": 100,
+          "minutes": 45
+        },
+        {
+          "small": 0,
+          "big": 0,
+          "minutes": 10,
+          "break": true
+        },
+        {
+          "small": 75,
+          "big": 150,
+          "minutes": 30
+        },
+        {
+          "small": 100,
+          "big": 200,
+          "minutes": 20
+        },
+        {
+          "small": 150,
+          "big": 300,
+          "minutes": 20
+        },
+        {
+          "small": 0,
+          "big": 0,
+          "minutes": 10,
+          "break": true
+        },
+        {
+          "small": 200,
+          "big": 400,
+          "minutes": 15
+        },
+        {
+          "small": 300,
+          "big": 600,
+          "minutes": 15
+        },
+        {
+          "small": 400,
+          "big": 800,
+          "minutes": 10
+        },
+        {
+          "small": 600,
+          "big": 1200,
+          "minutes": 10
+        },
+        {
+          "small": 800,
+          "big": 1600,
+          "minutes": 10
+        }
+      ],
+      "currentLevel": 0,
+      "secondsRemaining": 2700,
+      "timerStartedAt": null,
+      "startedAt": null
+    }
+  ]
+}

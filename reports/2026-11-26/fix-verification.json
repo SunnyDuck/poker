@@ -1,0 +1,127 @@
+{
+  "date": "2026-11-26",
+  "scope": "Local repository and production build; remote Apps Script deployment not performed",
+  "requirements": {
+    "blindSwitching": "Manual only; no automatic level advance",
+    "manualSwitchTimer": "Running remains running, paused remains paused; new level gets its full duration",
+    "precision": "Millisecond remainder retained on pause, reload and Sheets round-trip"
+  },
+  "checks": {
+    "diffCheck": "passed",
+    "typeCheck": "passed",
+    "npmTest": "passed",
+    "productionBuild": "passed",
+    "eightPlayerTournament": "10 hands, 1 rebuy, 8 places, 18000 chips, 4500 RUB; automated regression passed",
+    "legacySixPlayerTournament": "passed including full Sheets round-trip",
+    "largeMetadataRoundTrip": "passed (900 events; multiple Sheets cells)",
+    "browserConsole": "no errors in tested corrected application pages"
+  },
+  "browser": {
+    "settings": {
+      "initialLevels": 12,
+      "emptyDateBlocked": true,
+      "negativeBlocked": true,
+      "remaining": "00:58",
+      "state": {
+        "id": "tournament-1795690801900-ph53jl",
+        "secondsRemaining": 58,
+        "timerStartedAt": 1795690811900,
+        "levels": [
+          {
+            "small": 25,
+            "big": 50,
+            "minutes": 1
+          },
+          {
+            "small": 50,
+            "big": 100,
+            "minutes": 2
+          },
+          {
+            "small": 0,
+            "big": 0,
+            "minutes": 10,
+            "break": true
+          },
+          {
+            "small": 75,
+            "big": 150,
+            "minutes": 2
+          }
+        ]
+      }
+    },
+    "controls": {
+      "breakCheck": {
+        "time": "10:00",
+        "startDisabled": true
+      },
+      "pausedSwitch": {
+        "time": "02:00",
+        "paused": 1,
+        "nextDisabled": true
+      },
+      "running": "01:58",
+      "expiry": {
+        "time": "00:00",
+        "text": "Время уровня истекло\n00:00\n\nПоследний уровень. Турнир продолжается до ручного завершения.",
+        "level": 3
+      },
+      "deletionBlocked": true
+    },
+    "potsAndUndo": {
+      "switchRunning": {
+        "time": "02:00",
+        "running": 1,
+        "handBlind": 50
+      },
+      "pots": "Основной банк · 300 фишек\nАлексей\nАнна\nБорис\nПобочный банк 1 · 800 фишек\nАнна\nБорис",
+      "shortCannotWinSide": true,
+      "prematureBlocked": true,
+      "awarded": {
+        "player-1": 300,
+        "player-2": 800,
+        "player-3": 0
+      },
+      "undone": {
+        "stacks": {
+          "player-1": 100,
+          "player-2": 500,
+          "player-3": 500
+        },
+        "settled": false,
+        "history": 0
+      }
+    },
+    "legacyGameFinalView": {
+      "winnerRow": "АЛЕКСЕЙ\nМЕСТО 1\n\t1\t500 ₽\t18 000\t4 500 ₽\t+4 000 ₽\tПобедитель",
+      "winLabel": 1,
+      "hands": 10
+    },
+    "emptyDate": {
+      "headingsVisible": 6,
+      "fallbackVisible": true
+    }
+  },
+  "resolution": {
+    "F01": "fixed: main/side pots and refunds",
+    "F02": "fixed: settings validation and start guard",
+    "F03": "fixed: safe formatting of invalid stored dates",
+    "F04": "fixed: deletion/roster protection for played tournaments",
+    "F05": "fixed: season structure and level/break editor",
+    "F06": "clarified: manual switching is required behavior; expiry notice added",
+    "F07": "fixed: running/paused state preserved and final next button disabled",
+    "F08": "fixed: millisecond precision; 10 x 200 ms leaves 58 seconds",
+    "F09": "fixed: nominal BB retained per hand; short-blind call requirements",
+    "F10": "fixed: lossless action shape and supplemental metadata in Apps Script API 6",
+    "F11": "fixed: winner labels"
+  },
+  "otherImprovements": [
+    "Block new hands during breaks",
+    "Require river before multi-player showdown settlement",
+    "Undo last 20 financial operations; cancel current uncommitted hand",
+    "Timestamped per-hand event journal and duration",
+    "Largest personal award excludes unmatched refunds"
+  ],
+  "deployment": "Update google-apps-script/Code.gs in the existing Apps Script project and deploy a new version (API 6). No database reset needed. Remote integration itself not tested."
+}

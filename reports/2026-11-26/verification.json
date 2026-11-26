@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "finished",
+    "10 settled hands",
+    "8 distinct places",
+    "18000 chips",
+    "1 rebuy",
+    "per-hand chip reconstruction",
+    "heads-up dealer equals SB",
+    "Sheets normalized full-state equality"
+  ],
+  "restoredEmptyActionObjects": 17,
+  "remoteGoogleSheetsTested": false
+}

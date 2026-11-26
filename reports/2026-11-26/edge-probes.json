@@ -1,0 +1,165 @@
+{
+  "environment": "Node/Vite SSR and in-memory Apps Script harness; no remote writes",
+  "probes": [
+    {
+      "id": "side-pots",
+      "actual": {
+        "a": 550,
+        "b": 550,
+        "c": 0
+      },
+      "expected": {
+        "a": 300,
+        "b": 800,
+        "c": 0
+      },
+      "confirmed": true
+    },
+    {
+      "id": "uncalled-return",
+      "actual": {
+        "a": 600,
+        "b": 0
+      },
+      "expected": {
+        "a": 200,
+        "b": 400
+      },
+      "confirmed": true
+    },
+    {
+      "id": "short-big-blind",
+      "actualRequirements": [],
+      "actualAdvance": true,
+      "expected": "a and b must contribute 50 each, not 25"
+    },
+    {
+      "id": "negative-starting-stack",
+      "actual": {
+        "status": "live",
+        "stacks": {
+          "a": -10,
+          "b": -10,
+          "c": -10
+        }
+      },
+      "expected": "Reject start; show validation error"
+    },
+    {
+      "id": "delete-active-player",
+      "actual": {
+        "participants": [
+          "b",
+          "c"
+        ],
+        "totalChips": 1000
+      },
+      "expected": "Block deletion of participant in live tournament; preserve 1100 chips"
+    },
+    {
+      "id": "premature-settlement",
+      "actual": true,
+      "street": "preflop",
+      "contenders": 3,
+      "expected": "Require explicit showdown/confirmation while multiple contenders remain"
+    },
+    {
+      "id": "fractional-pause-loss",
+      "actual": 50,
+      "expected": 58,
+      "elapsedActiveMilliseconds": 2000,
+      "explanation": "Ten runs of 200 ms starting at xx.900 consume ten seconds because each start rounds down to whole second"
+    },
+    {
+      "id": "next-on-last-level",
+      "actual": {
+        "level": 0,
+        "timerStartedAt": null
+      },
+      "expected": "Disable next level button; do not pause running timer when no next level exists"
+    },
+    {
+      "id": "sheets-null-actions",
+      "actual": {
+        "bets": {
+          "preflop": [
+            50,
+            0,
+            0,
+            0
+          ],
+          "flop": [
+            0,
+            0,
+            0
+          ],
+          "turn": [
+            0,
+            0,
+            0
+          ],
+          "river": [
+            0,
+            0,
+            0
+          ]
+        },
+        "folded": false,
+        "foldedOn": null,
+        "takesPot": false
+      },
+      "expected": {
+        "bets": {
+          "preflop": [
+            50,
+            0,
+            0,
+            0
+          ],
+          "flop": [
+            0,
+            0,
+            0
+          ],
+          "turn": [
+            0,
+            0,
+            0
+          ],
+          "river": [
+            0,
+            0,
+            0
+          ]
+        },
+        "actions": {
+          "preflop": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "flop": [
+            null,
+            null,
+            null
+          ],
+          "turn": [
+            null,
+            null,
+            null
+          ],
+          "river": [
+            null,
+            null,
+            null
+          ]
+        },
+        "folded": false,
+        "foldedOn": null,
+        "takesPot": false
+      },
+      "explanation": "All-null action objects are omitted. Browser normalizeState restores them; this structural mismatch explains existing failing test."
+    }
+  ]
+}

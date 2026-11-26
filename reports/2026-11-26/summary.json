@@ -1,0 +1,285 @@
+{
+  "players": [
+    {
+      "id": "player-1",
+      "name": "Алексей",
+      "place": 1,
+      "hands": 10,
+      "wins": 9,
+      "investment": 500,
+      "chips": 18000,
+      "cashout": 4500,
+      "rebuy": 0,
+      "folds": 0,
+      "checks": 3,
+      "calls": 12,
+      "raises": 3,
+      "allins": 0,
+      "points": 10
+    },
+    {
+      "id": "player-2",
+      "name": "Анна",
+      "place": 2,
+      "hands": 10,
+      "wins": 1,
+      "investment": 500,
+      "chips": 0,
+      "cashout": 0,
+      "rebuy": 0,
+      "folds": 7,
+      "checks": 3,
+      "calls": 3,
+      "raises": 0,
+      "allins": 1,
+      "points": 7
+    },
+    {
+      "id": "player-3",
+      "name": "Борис",
+      "place": 3,
+      "hands": 9,
+      "wins": 1,
+      "investment": 500,
+      "chips": 0,
+      "cashout": 0,
+      "rebuy": 0,
+      "folds": 6,
+      "checks": 3,
+      "calls": 6,
+      "raises": 0,
+      "allins": 1,
+      "points": 5
+    },
+    {
+      "id": "player-4",
+      "name": "Вика",
+      "place": 4,
+      "hands": 8,
+      "wins": 0,
+      "investment": 500,
+      "chips": 0,
+      "cashout": 0,
+      "rebuy": 0,
+      "folds": 5,
+      "checks": 4,
+      "calls": 4,
+      "raises": 2,
+      "allins": 1,
+      "points": 3
+    },
+    {
+      "id": "player-5",
+      "name": "Дмитрий",
+      "place": 5,
+      "hands": 7,
+      "wins": 0,
+      "investment": 500,
+      "chips": 0,
+      "cashout": 0,
+      "rebuy": 0,
+      "folds": 4,
+      "checks": 3,
+      "calls": 7,
+      "raises": 0,
+      "allins": 1,
+      "points": 2
+    },
+    {
+      "id": "player-6",
+      "name": "Екатерина",
+      "place": 6,
+      "hands": 6,
+      "wins": 0,
+      "investment": 500,
+      "chips": 0,
+      "cashout": 0,
+      "rebuy": 0,
+      "folds": 3,
+      "checks": 3,
+      "calls": 7,
+      "raises": 0,
+      "allins": 1,
+      "points": 2
+    },
+    {
+      "id": "player-7",
+      "name": "Илья",
+      "place": 7,
+      "hands": 5,
+      "wins": 0,
+      "investment": 500,
+      "chips": 0,
+      "cashout": 0,
+      "rebuy": 0,
+      "folds": 2,
+      "checks": 3,
+      "calls": 7,
+      "raises": 0,
+      "allins": 1,
+      "points": 1
+    },
+    {
+      "id": "player-8",
+      "name": "Мария",
+      "place": 8,
+      "hands": 4,
+      "wins": 0,
+      "investment": 1000,
+      "chips": 0,
+      "cashout": 0,
+      "rebuy": 1,
+      "folds": 0,
+      "checks": 3,
+      "calls": 7,
+      "raises": 0,
+      "allins": 2,
+      "points": 2
+    }
+  ],
+  "hands": [
+    {
+      "number": 1,
+      "pot": 2800,
+      "street": "river",
+      "players": 8,
+      "winners": [
+        "Алексей"
+      ],
+      "roles": {
+        "dealer": "player-1",
+        "smallBlind": "player-2",
+        "bigBlind": "player-3"
+      }
+    },
+    {
+      "number": 2,
+      "pot": 800,
+      "street": "river",
+      "players": 8,
+      "winners": [
+        "Анна",
+        "Борис"
+      ],
+      "roles": {
+        "dealer": "player-2",
+        "smallBlind": "player-3",
+        "bigBlind": "player-4"
+      }
+    },
+    {
+      "number": 3,
+      "pot": 3250,
+      "street": "preflop",
+      "players": 8,
+      "winners": [
+        "Алексей"
+      ],
+      "roles": {
+        "dealer": "player-3",
+        "smallBlind": "player-4",
+        "bigBlind": "player-5"
+      }
+    },
+    {
+      "number": 4,
+      "pot": 4225,
+      "street": "preflop",
+      "players": 8,
+      "winners": [
+        "Алексей"
+      ],
+      "roles": {
+        "dealer": "player-4",
+        "smallBlind": "player-5",
+        "bigBlind": "player-6"
+      }
+    },
+    {
+      "number": 5,
+      "pot": 3175,
+      "street": "preflop",
+      "players": 7,
+      "winners": [
+        "Алексей"
+      ],
+      "roles": {
+        "dealer": "player-5",
+        "smallBlind": "player-6",
+        "bigBlind": "player-7"
+      }
+    },
+    {
+      "number": 6,
+      "pot": 2800,
+      "street": "preflop",
+      "players": 6,
+      "winners": [
+        "Алексей"
+      ],
+      "roles": {
+        "dealer": "player-6",
+        "smallBlind": "player-1",
+        "bigBlind": "player-2"
+      }
+    },
+    {
+      "number": 7,
+      "pot": 2975,
+      "street": "preflop",
+      "players": 5,
+      "winners": [
+        "Алексей"
+      ],
+      "roles": {
+        "dealer": "player-1",
+        "smallBlind": "player-2",
+        "bigBlind": "player-3"
+      }
+    },
+    {
+      "number": 8,
+      "pot": 3075,
+      "street": "preflop",
+      "players": 4,
+      "winners": [
+        "Алексей"
+      ],
+      "roles": {
+        "dealer": "player-2",
+        "smallBlind": "player-3",
+        "bigBlind": "player-4"
+      }
+    },
+    {
+      "number": 9,
+      "pot": 3600,
+      "street": "preflop",
+      "players": 3,
+      "winners": [
+        "Алексей"
+      ],
+      "roles": {
+        "dealer": "player-3",
+        "smallBlind": "player-1",
+        "bigBlind": "player-2"
+      }
+    },
+    {
+      "number": 10,
+      "pot": 3150,
+      "street": "preflop",
+      "players": 2,
+      "winners": [
+        "Алексей"
+      ],
+      "roles": {
+        "dealer": "player-1",
+        "smallBlind": "player-1",
+        "bigBlind": "player-2"
+      }
+    }
+  ],
+  "totalPot": 29850,
+  "recordedActionCounts": {"call":53,"small-blind":10,"bet":3,"big-blind":10,"raise":5,"check":25,"all-in":8}
+}

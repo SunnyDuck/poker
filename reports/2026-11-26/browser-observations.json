@@ -1,0 +1,93 @@
+{
+  "realClock": {
+    "before": {
+      "text": "45:00",
+      "wall": 1795683381267
+    },
+    "after": {
+      "text": "44:55",
+      "wall": 1795683386574
+    },
+    "paused": {
+      "text": "44:55",
+      "wall": 1795683386632
+    },
+    "stillPaused": {
+      "text": "44:55",
+      "wall": 1795683389638
+    },
+    "reloaded": {
+      "text": "44:53",
+      "wall": 1795683392935
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "overlaps": [],
+      "outside": []
+    }
+  },
+  "invalidSettings": {
+    "newInfo": {
+      "url": "http://127.0.0.1:4180/#/admin/tournaments/tournament-1795693521000",
+      "levels": 1,
+      "date": "2026-12-25",
+      "structure": "СТРУКТУРА\nУровни блайндов\nУровень 1\n25 / 50\n30 мин\n\nСписок взят из положения сезона; редактирование структуры добавим отдельно."
+    },
+    "startEnabled": true,
+    "invalid": {
+      "title": "",
+      "status": "live",
+      "stacks": {
+        "player-1": -10,
+        "player-2": -10
+      }
+    },
+    "nextHandDisabled": true
+  },
+  "emptyDateAndDeletion": {
+    "deleted": {
+      "players": 7,
+      "total": 10500,
+      "pot": 50
+    },
+    "errors": [],
+    "body": "♠\nFriendly Poker\nРасписание\nРейтинг\nСтатистика\nРезультаты\nАдминка\nFriendly Poker · Сезон 1\nДемо-версия",
+    "headings": 0
+  },
+  "dateConsole": {
+    "content": [
+      {
+        "type": "text",
+        "text": "### Result\nTotal messages: 1 (Errors: 1, Warnings: 0)\n\n[ERROR] RangeError: Invalid time value\n    at f (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:2:59915)\n    at Proxy.<anonymous> (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:2:60558)\n    at ti (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:1:36596)\n    at je.s [as fn] (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:1:46650)\n    at je.run (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:1:6662)\n    at le (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:1:47016)\n    at se (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:1:45523)\n    at oe (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:1:45294)\n    at v (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:1:41943)\n    at je.s [as fn] (http://127.0.0.1:4180/assets/index-BfnDwmJg.js:1:46656) @ http://127.0.0.1:4180/assets/index-BfnDwmJg.js:1"
+      }
+    ]
+  },
+  "acceleratedClock": {
+    "initial": "45:00",
+    "afterTenSeconds": "44:50",
+    "pauseTwentySeconds": "44:50",
+    "afterResumeSixSeconds": "44:44",
+    "afterRemaining2684Seconds": "00:00",
+    "levelAtZero": 1,
+    "manualNext": {
+      "level": 2,
+      "timer": "45:00",
+      "paused": true
+    },
+    "break": {
+      "level": 3,
+      "handAllowed": true,
+      "blindsUsed": "50 / 100"
+    },
+    "laterLevel": "75 / 150"
+  },
+  "layout": {
+    "desktop": {
+      "width": 1280,
+      "height": 720,
+      "overlaps": [],
+      "verticalScroll": false
+    }
+  }
+}
