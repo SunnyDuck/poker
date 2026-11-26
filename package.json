@@ -9,19 +9,33 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "test": "node --experimental-strip-types --test tests/game.test.ts && node --test tests/sheets-roundtrip.test.cjs tests/tournament-simulation.test.mjs tests/tournament-regressions.test.mjs"
+    "test": "node --experimental-strip-types --test tests/game.test.ts && node --experimental-strip-types --test tests/admin-keyboard-navigation.test.mjs tests/sheets-roundtrip.test.cjs tests/tournament-simulation.test.mjs tests/tournament-regressions.test.mjs",
+    "lint": "eslint src --max-warnings 0",
+    "format": "prettier --write \"src/**/*.{ts,vue,css}\""
   },
   "dependencies": {
+    "pinia": "^4.1.0",
     "vue": "^3.5.42",
     "vue-router": "^5.5.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@tsconfig/node24": "^24.0.5",
     "@types/node": "^24.13.4",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/tsconfig": "^0.9.1",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.7",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "eslint-plugin-vue": "^10.12.1",
+    "eslint-vue-setup-rules": "^1.2.0",
+    "globals": "^17.14.0",
     "npm-run-all2": "^9.0.3",
+    "prettier": "^3.10.1",
     "typescript": "~6.0.0",
+    "typescript-eslint": "^8.74.0",
     "vite": "^8.2.2",
     "vite-plugin-vue-devtools": "^8.2.1",
     "vue-tsc": "^3.3.11"

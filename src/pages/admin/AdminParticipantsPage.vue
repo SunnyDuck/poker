@@ -1,99 +1,156 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { addPlayer, playerHasHistory, removePlayerFromSeason, state } from '@/stores/poker'
-import KitIcon from '@/components/KitIcon.vue'
+import { ref } from "vue";
 
-const newPlayerName = ref('')
-const message = ref('')
+import { usePokerStore } from "@/stores/poker";
+const pokerStore = usePokerStore();
 
-function addParticipant() {
-  const name = newPlayerName.value.trim()
+const newPlayerName = ref("");
+const message = ref("");
+
+const addParticipant = () => {
+  const name = newPlayerName.value.trim();
   if (!name) {
-    message.value = 'Введите имя участника.'
-    return
+    message.value = "Введите имя участника.";
+    return;
   }
 
-  if (state.players.some((player) => player.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase())) {
-    message.value = 'Участник с таким именем уже есть в списке.'
-    return
+  if (
+    pokerStore.state.players.some(
+      (player) =>
+        player.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase(),
+    )
+  ) {
+    message.value = "Участник с таким именем уже есть в списке.";
+    return;
   }
 
-  addPlayer(name)
-  newPlayerName.value = ''
-  message.value = `${name} добавлен в список сезона.`
-}
+  pokerStore.addPlayer(name);
+  newPlayerName.value = "";
+  message.value = `${name} добавлен в список сезона.`;
+};
 
-function renameParticipant(playerId: string, event: Event) {
-  const input = event.target as HTMLInputElement
-  const player = state.players.find((item) => item.id === playerId)
-  if (!player) return
+const renameParticipant = (playerId: string, event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const player = pokerStore.state.players.find((item) => item.id === playerId);
+  if (!player) return;
 
-  const name = input.value.trim()
+  const name = input.value.trim();
   if (!name) {
-    input.value = player.name
-    message.value = 'Имя участника не может быть пустым.'
-    return
+    input.value = player.name;
+    message.value = "Имя участника не может быть пустым.";
+    return;
   }
 
-  const duplicate = state.players.some((item) => item.id !== playerId && item.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase())
+  const duplicate = pokerStore.state.players.some(
+    (item) =>
+      item.id !== playerId &&
+      item.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase(),
+  );
   if (duplicate) {
-    input.value = player.name
-    message.value = 'Участник с таким именем уже есть в списке.'
-    return
+    input.value = player.name;
+    message.value = "Участник с таким именем уже есть в списке.";
+    return;
   }
 
-  player.name = name
-  message.value = ''
-}
+  player.name = name;
+  message.value = "";
+};
 
-function deleteParticipant(playerId: string) {
-  const player = state.players.find((item) => item.id === playerId)
-  if (!player) return
+const deleteParticipant = (playerId: string) => {
+  const player = pokerStore.state.players.find((item) => item.id === playerId);
+  if (!player) return;
 
-  if (playerHasHistory(playerId)) {
-    message.value = 'Нельзя удалить участника начатой игры: его ставки и результаты должны сохраниться.'
-    return
+  if (pokerStore.playerHasHistory(playerId)) {
+    message.value =
+      "Нельзя удалить участника начатой игры: его ставки и результаты должны сохраниться.";
+    return;
   }
-  const confirmed = window.confirm(`Удалить ${player.name} из списка сезона и составов предстоящих турниров?`)
-  if (!confirmed) return
+  const confirmed = window.confirm(
+    `Удалить ${player.name} из списка сезона и составов предстоящих турниров?`,
+  );
+  if (!confirmed) return;
 
-  message.value = removePlayerFromSeason(playerId) ? `${player.name} удалён из списка сезона.` : 'Участник уже задействован в начатой игре. Удаление отменено.'
-}
+  message.value = pokerStore.removePlayerFromSeason(playerId)
+    ? `${player.name} удалён из списка сезона.`
+    : "Участник уже задействован в начатой игре. Удаление отменено.";
+};
 </script>
 
 <template>
-  <div class="admin-page-head">
+  <div class="admin__page-head">
     <div>
-      <div class="eyebrow"><RouterLink to="/admin">ТУРНИРЫ</RouterLink> / УЧАСТНИКИ</div>
+      <div class="eyebrow">
+        <RouterLink to="/admin">ТУРНИРЫ</RouterLink> / УЧАСТНИКИ
+      </div>
       <h1>Участники сезона</h1>
-      <p class="muted">Добавляйте и редактируйте список, из которого собираются составы турниров.</p>
+      <p class="muted">
+        Добавляйте и редактируйте список, из которого собираются составы
+        турниров.
+      </p>
     </div>
-    <RouterLink class="button button-outline" to="/admin">К турнирам</RouterLink>
+    <RouterLink class="button button--outline" to="/admin"
+      >К турнирам</RouterLink
+    >
   </div>
 
   <section class="panel participant-settings-panel">
     <div class="panel-heading">
-      <div><div class="eyebrow">ОБЩИЙ СПИСОК</div><h2>Список участников</h2></div>
-      <span class="count-pill">{{ state.players.length }}</span>
+      <div>
+        <div class="eyebrow">ОБЩИЙ СПИСОК</div>
+        <h2>Список участников</h2>
+      </div>
+      <span class="count-pill">{{ pokerStore.state.players.length }}</span>
     </div>
 
-    <form class="add-participant-form" @submit.prevent="addParticipant">
+    <form
+      class="add-participant-form"
+      data-enter-submit
+      @submit.prevent="addParticipant"
+    >
       <label class="field" for="new-participant-name">Добавить участника</label>
       <div class="add-participant-controls">
-        <input id="new-participant-name" v-model="newPlayerName" maxlength="40" placeholder="Имя участника">
-        <button class="button button-dark" type="submit">Добавить</button>
+        <input
+          id="new-participant-name"
+          v-model="newPlayerName"
+          maxlength="40"
+          placeholder="Имя участника"
+        />
+        <button class="button button--dark" type="submit">Добавить</button>
       </div>
     </form>
 
-    <p v-if="message" class="participant-message" role="status">{{ message }}</p>
+    <p v-if="message" class="participant-message" role="status">
+      {{ message }}
+    </p>
 
-    <div v-if="state.players.length" class="season-participant-list">
-      <div v-for="player in state.players" :key="player.id" class="season-participant-row">
+    <div v-if="pokerStore.state.players.length" class="season-participant-list">
+      <div
+        v-for="player in pokerStore.state.players"
+        :key="player.id"
+        class="season-participant-row"
+      >
         <label class="field participant-edit-field">
           <span class="sr-only">Имя участника</span>
-          <input :value="player.name" :aria-label="`Имя участника ${player.name}`" maxlength="40" @change="renameParticipant(player.id, $event)">
+          <input
+            :value="player.name"
+            :aria-label="`Имя участника ${player.name}`"
+            maxlength="40"
+            @change="renameParticipant(player.id, $event)"
+          />
         </label>
-        <button class="remove-player-button" type="button" :disabled="playerHasHistory(player.id)" :title="playerHasHistory(player.id) ? 'Участник начатой или завершённой игры: удаление недоступно' : ''" @click="deleteParticipant(player.id)">Удалить</button>
+        <button
+          class="remove-player-button"
+          type="button"
+          :disabled="pokerStore.playerHasHistory(player.id)"
+          :title="
+            pokerStore.playerHasHistory(player.id)
+              ? 'Участник начатой или завершённой игры: удаление недоступно'
+              : ''
+          "
+          @click="deleteParticipant(player.id)"
+        >
+          Удалить
+        </button>
       </div>
     </div>
     <div v-else class="empty-state participant-empty-state">
@@ -101,6 +158,10 @@ function deleteParticipant(playerId: string) {
       <span>Добавьте участников, чтобы выбирать их в турнирах.</span>
     </div>
 
-    <p class="fine-print">Удалять можно только участников, которые ещё не играли. Составы начатых игр и история защищены. Чтобы исключить игрока из предстоящей игры, снимите отметку в составе этого турнира.</p>
+    <p class="fine-print">
+      Удалять можно только участников, которые ещё не играли. Составы начатых
+      игр и история защищены. Чтобы исключить игрока из предстоящей игры,
+      снимите отметку в составе этого турнира.
+    </p>
   </section>
 </template>
