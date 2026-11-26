@@ -104,17 +104,23 @@ const gameRoster = computed(() => {
   const currentTournament = tournament.value;
   if (!currentTournament) return [];
 
-  const count = currentTournament.participantIds.length;
+  const activeIds = currentTournament.participantIds.filter(
+    (id) =>
+      currentTournament.places[id] == null ||
+      (currentTournament.status === "finished" &&
+        currentTournament.places[id] === 1),
+  );
+  const count = activeIds.length;
   const maximumStack = Math.max(
     1,
-    ...currentTournament.participantIds.map((id) => {
+    ...activeIds.map((id) => {
       const player = currentHand.value?.players[id];
       return player && currentHand.value
         ? projectedStack(currentTournament, currentHand.value, id)
         : (currentTournament.stacks[id] ?? 0);
     }),
   );
-  return currentTournament.participantIds.map((id, index) => {
+  return activeIds.map((id, index) => {
     const player = currentHand.value?.players[id];
     const angle = (360 / Math.max(count, 1)) * index - 90;
     const radians = (angle * Math.PI) / 180;
@@ -188,8 +194,8 @@ const gameRoster = computed(() => {
         ? isPlayerAllIn(currentTournament, currentHand.value, id)
         : false,
       position: {
-        left: `${50 + Math.cos(radians) * (count === 10 ? 36 : 40)}%`,
-        top: `${50 + Math.sin(radians) * (count === 10 ? 34 : 38)}%`,
+        left: `${50 + Math.cos(radians) * (count >= 9 ? 39 : 43)}%`,
+        top: `${50 + Math.sin(radians) * (count >= 9 ? 36 : 41)}%`,
       },
     };
   });
@@ -294,88 +300,98 @@ const tournamentDate = computed(() =>
             <span class="screen__felt-caption">{{
               currentHand ? handStreetLabel : "МЕСТА ЗА СТОЛОМ"
             }}</span>
-            <span
-              v-for="player in gameRoster"
-              :key="`chips-${player.id}`"
-              class="screen__chip-pile"
-              :style="player.chipPosition"
-              role="img"
-              :aria-label="`Стопка ${player.name}: примерно ${player.chipCount} условных фишек, стек ${numberFormat.format(player.stack)}`"
-              :title="`Стек ${numberFormat.format(player.stack)} · высота стопки условная`"
+            <TransitionGroup
+              name="chip-exit"
+              tag="div"
+              class="screen__chip-layer"
             >
               <span
-                v-for="(tower, towerIndex) in player.chipTowers"
-                :key="towerIndex"
-                class="screen__chip-tower"
-                :class="`screen__chip-tower--${towerIndex + 1}`"
+                v-for="player in gameRoster"
+                :key="`chips-${player.id}`"
+                class="screen__chip-pile"
+                :style="player.chipPosition"
+                role="img"
+                :aria-label="`Стопка ${player.name}: примерно ${player.chipCount} условных фишек, стек ${numberFormat.format(player.stack)}`"
+                :title="`Стек ${numberFormat.format(player.stack)} · высота стопки условная`"
               >
-                <img
-                  v-for="chip in tower"
-                  :key="chip"
-                  class="screen__chip-image"
-                  :src="pokerChip"
-                  alt=""
-                />
+                <span
+                  v-for="(tower, towerIndex) in player.chipTowers"
+                  :key="towerIndex"
+                  class="screen__chip-tower"
+                  :class="`screen__chip-tower--${towerIndex + 1}`"
+                >
+                  <img
+                    v-for="chip in tower"
+                    :key="chip"
+                    class="screen__chip-image"
+                    :src="pokerChip"
+                    alt=""
+                  />
+                </span>
               </span>
-            </span>
+            </TransitionGroup>
           </div>
-          <article
-            v-for="player in gameRoster"
-            :key="player.id"
-            class="screen__seat"
-            :class="{
-              'screen__seat--eliminated':
-                player.place != null && player.place > 1,
-              'screen__seat--folded': player.folded,
-              'screen__seat--all-in': player.allIn,
-            }"
-            :style="player.position"
+          <TransitionGroup
+            name="seat-exit"
+            tag="div"
+            class="screen__seat-layer"
           >
-            <strong class="screen__seat-name">{{ player.name }}</strong>
-            <div
-              v-if="player.roles.length"
-              class="screen__seat-roles"
-              :aria-label="player.roles.join(', ')"
-            >
-              <span
-                v-for="role in player.roles"
-                :key="role"
-                :class="
-                  role === 'Дилер'
-                    ? 'screen__seat-role--dealer'
-                    : 'screen__seat-role--blind'
-                "
-                >{{ role }}</span
-              >
-            </div>
-            <div class="screen__seat-stackline">
-              <span class="screen__seat-stack"
-                >{{ player.stackLabel
-                }}<small
-                  v-if="player.showChipUnit"
-                  class="screen__seat-stack-unit"
-                  >фишек</small
-                ></span
-              >
-            </div>
-            <span
-              v-if="tournament.gameInitialized && player.place == null"
-              class="screen__seat-bet"
+            <article
+              v-for="player in gameRoster"
+              :key="player.id"
+              class="screen__seat"
               :class="{
-                'screen__seat-bet--all-in': player.allIn,
-                'screen__seat-bet--folded': player.folded,
+                'screen__seat--folded': player.folded,
+                'screen__seat--all-in': player.allIn,
               }"
+              :style="player.position"
             >
-              <small>{{
-                player.folded
-                  ? "ФОЛД"
-                  : player.allIn
-                    ? "ОЛЛ-ИН"
-                    : "СТАВКА УЛИЦЫ"
-              }}</small>
-              <b>{{ numberFormat.format(player.bet) }}</b>
-            </span>
-          </article>
+              <strong class="screen__seat-name">{{ player.name }}</strong>
+              <div
+                v-if="player.roles.length"
+                class="screen__seat-roles"
+                :aria-label="player.roles.join(', ')"
+              >
+                <span
+                  v-for="role in player.roles"
+                  :key="role"
+                  :class="
+                    role === 'Дилер'
+                      ? 'screen__seat-role--dealer'
+                      : 'screen__seat-role--blind'
+                  "
+                  >{{ role }}</span
+                >
+              </div>
+              <div class="screen__seat-stackline">
+                <span class="screen__seat-stack"
+                  >{{ player.stackLabel
+                  }}<small
+                    v-if="player.showChipUnit"
+                    class="screen__seat-stack-unit"
+                    >фишек</small
+                  ></span
+                >
+              </div>
+              <span
+                v-if="tournament.gameInitialized"
+                class="screen__seat-bet"
+                :class="{
+                  'screen__seat-bet--all-in': player.allIn,
+                  'screen__seat-bet--folded': player.folded,
+                }"
+              >
+                <small>{{
+                  player.folded
+                    ? "ФОЛД"
+                    : player.allIn
+                      ? "ОЛЛ-ИН"
+                      : "СТАВКА УЛИЦЫ"
+                }}</small>
+                <b>{{ numberFormat.format(player.bet) }}</b>
+              </span>
+            </article>
+          </TransitionGroup>
           <div v-if="!gameRoster.length" class="screen__empty">
             Состав турнира ещё не добавлен
           </div>
@@ -687,6 +703,21 @@ const tournamentDate = computed(() =>
     0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
+.screen__chip-layer,
+.screen__seat-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.screen__chip-layer {
+  z-index: 1;
+}
+
+.screen__seat-layer {
+  z-index: 2;
+}
+
 .screen__sector-lines {
   position: absolute;
   z-index: 0;
@@ -742,7 +773,6 @@ const tournamentDate = computed(() =>
 
 .screen__seat {
   position: absolute;
-  z-index: 2;
   width: clamp(118px, 14vw, 180px);
   min-height: 112px;
   padding: 10px 11px 8px;
@@ -751,6 +781,9 @@ const tournamentDate = computed(() =>
   align-items: center;
   gap: 3px;
   transform: translate(-50%, -50%);
+  transition:
+    left 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 620ms cubic-bezier(0.22, 1, 0.36, 1);
   border: 1px solid rgba(255, 201, 38, 0.68);
   border-radius: 11px;
   background: linear-gradient(
@@ -762,6 +795,42 @@ const tournamentDate = computed(() =>
     0 8px 20px rgba(0, 0, 0, 0.44),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
   text-align: center;
+}
+
+.seat-exit-leave-active {
+  animation: seat-exit 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  pointer-events: none;
+}
+
+.chip-exit-leave-active {
+  animation: chips-exit 480ms ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes seat-exit {
+  0% {
+    opacity: 1;
+    filter: blur(0) brightness(1);
+    transform: translate(-50%, -50%) scale(1) rotate(0);
+  }
+  55% {
+    opacity: 0.88;
+    filter: blur(1px) brightness(1.25);
+    transform: translate(-50%, -55%) scale(0.88) rotate(-3deg);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(8px) brightness(1.8);
+    transform: translate(-50%, -78%) scale(0.5) rotate(8deg);
+  }
+}
+
+@keyframes chips-exit {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate(-50%, -65%) scale(0.45) rotate(18deg);
+  }
 }
 
 .screen__seat--eliminated {
@@ -849,7 +918,22 @@ const tournamentDate = computed(() =>
   align-items: flex-end;
   gap: 3px;
   transform: translate(-50%, -50%);
+  transition:
+    left 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 620ms cubic-bezier(0.22, 1, 0.36, 1);
   filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.42));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen__seat,
+  .screen__chip-pile {
+    transition-duration: 0.01ms;
+  }
+
+  .seat-exit-leave-active,
+  .chip-exit-leave-active {
+    animation-duration: 0.01ms;
+  }
 }
 
 .screen__chip-tower {

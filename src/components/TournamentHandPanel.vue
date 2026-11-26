@@ -295,6 +295,12 @@ const commitBetChange = (
 ): boolean => {
   const previous =
     hand.value?.players[playerId]?.bets[street]?.[actionIndex] ?? 0;
+  const untouchedZero = input.value === "" && previous === 0;
+  if (untouchedZero) {
+    input.value = "0";
+    message.value = "";
+    return true;
+  }
   const amount = input.value === "" ? 0 : Number(input.value);
   if (
     amount === 0 &&
@@ -329,6 +335,18 @@ const commitBetChange = (
     );
   message.value = "";
   return true;
+};
+
+const clearZeroOnFocus = (event: FocusEvent) => {
+  const input = event.currentTarget;
+  if (input instanceof HTMLInputElement && input.value === "0")
+    input.value = "";
+};
+
+const restoreEmptyZeroOnBlur = (event: FocusEvent) => {
+  const input = event.currentTarget;
+  if (input instanceof HTMLInputElement && input.value === "")
+    input.value = "0";
 };
 
 const onBetChange = (
@@ -370,9 +388,17 @@ const focusNextPlayerAction = async (
     ),
   );
 
-  for (const entry of handParticipants.value.slice(currentPlayerIndex + 1)) {
+  const orderedPlayers = [
+    ...handParticipants.value.slice(currentPlayerIndex + 1),
+    ...handParticipants.value.slice(0, currentPlayerIndex),
+  ];
+  for (const entry of orderedPlayers) {
+    const playerIndex = handParticipants.value.findIndex(
+      (participant) => participant.id === entry.id,
+    );
+    const firstActionIndex = playerIndex < currentPlayerIndex ? 0 : actionIndex;
     for (
-      let nextActionIndex = actionIndex;
+      let nextActionIndex = firstActionIndex;
       nextActionIndex < streetActionCount.value;
       nextActionIndex += 1
     ) {
@@ -775,6 +801,8 @@ const stageName = (street: HandStreet): string => {
                       (isPlayerAllIn(tournament, hand, entry.id) &&
                         !(entry.player.bets[hand.street][actionIndex] ?? 0))
                     "
+                    @focus="clearZeroOnFocus"
+                    @blur="restoreEmptyZeroOnBlur"
                     @change="
                       onBetChange(entry.id, hand.street, actionIndex, $event)
                     "
