@@ -72,6 +72,82 @@ const expired = computed(
 
 const numberFormat = new Intl.NumberFormat("ru-RU");
 
+const seatGridLayouts: Record<number, Array<[row: number, column: number]>> = {
+  1: [[3, 4]],
+  2: [
+    [1, 4],
+    [5, 4],
+  ],
+  3: [
+    [1, 4],
+    [4, 7],
+    [4, 1],
+  ],
+  4: [
+    [1, 4],
+    [3, 7],
+    [5, 4],
+    [3, 1],
+  ],
+  5: [
+    [1, 4],
+    [2, 7],
+    [4, 7],
+    [4, 1],
+    [2, 1],
+  ],
+  6: [
+    [1, 2],
+    [1, 6],
+    [3, 7],
+    [5, 6],
+    [5, 2],
+    [3, 1],
+  ],
+  7: [
+    [1, 4],
+    [2, 7],
+    [4, 7],
+    [5, 5],
+    [5, 3],
+    [4, 1],
+    [2, 1],
+  ],
+  8: [
+    [1, 2],
+    [1, 6],
+    [2, 7],
+    [4, 7],
+    [5, 6],
+    [5, 2],
+    [4, 1],
+    [2, 1],
+  ],
+  9: [
+    [1, 2],
+    [1, 4],
+    [1, 6],
+    [2, 7],
+    [4, 7],
+    [5, 5],
+    [5, 3],
+    [4, 1],
+    [2, 1],
+  ],
+  10: [
+    [1, 4],
+    [1, 6],
+    [2, 7],
+    [4, 7],
+    [5, 6],
+    [5, 4],
+    [5, 2],
+    [4, 1],
+    [3, 1],
+    [2, 1],
+  ],
+};
+
 const currentHand = computed(() =>
   tournament.value ? pokerStore.getCurrentHand(tournament.value) : undefined,
 );
@@ -105,6 +181,7 @@ const gameRoster = computed(() => {
   if (!currentTournament) return [];
 
   const count = currentTournament.participantIds.length;
+  const seatLayout = seatGridLayouts[count] ?? seatGridLayouts[1]!;
   const maximumStack = Math.max(
     1,
     ...currentTournament.participantIds.map((id) => {
@@ -187,9 +264,9 @@ const gameRoster = computed(() => {
       allIn: currentHand.value
         ? isPlayerAllIn(currentTournament, currentHand.value, id)
         : false,
-      position: {
-        left: `${50 + Math.cos(radians) * 40}%`,
-        top: `${50 + Math.sin(radians) * 38}%`,
+      gridPosition: {
+        gridRow: String(seatLayout[index]?.[0] ?? 3),
+        gridColumn: String(seatLayout[index]?.[1] ?? 4),
       },
     };
   });
@@ -329,7 +406,7 @@ const tournamentDate = computed(() =>
               'screen__seat--folded': player.folded,
               'screen__seat--all-in': player.allIn,
             }"
-            :style="player.position"
+            :style="player.gridPosition"
           >
             <strong class="screen__seat-name">{{ player.name }}</strong>
             <div
@@ -661,8 +738,12 @@ const tournamentDate = computed(() =>
 
 .screen__table {
   position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(116px, 1fr));
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 580px;
+  gap: 4px;
   margin: 8px 0 4px;
 }
 
@@ -741,7 +822,7 @@ const tournamentDate = computed(() =>
 }
 
 .screen__seat {
-  position: absolute;
+  position: relative;
   z-index: 2;
   width: clamp(118px, 14vw, 180px);
   min-height: 112px;
@@ -750,7 +831,8 @@ const tournamentDate = computed(() =>
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  transform: translate(-50%, -50%);
+  justify-self: center;
+  align-self: center;
   border: 1px solid rgba(255, 201, 38, 0.68);
   border-radius: 11px;
   background: linear-gradient(
@@ -1171,6 +1253,12 @@ const tournamentDate = computed(() =>
     padding: 10px;
   }
 
+  .screen__table {
+    grid-template-rows: repeat(5, minmax(70px, 1fr));
+    min-height: 350px;
+    gap: 2px;
+  }
+
   .screen__table-heading .eyebrow,
   .screen__info-heading .eyebrow {
     font-size: 9px;
@@ -1181,11 +1269,11 @@ const tournamentDate = computed(() =>
   }
 
   .screen__table-felt {
-    inset: 18% 12%;
+    inset: 18% 16%;
   }
 
   .screen__seat {
-    width: clamp(76px, 23vw, 102px);
+    width: clamp(72px, 21vw, 92px);
     min-height: 55px;
     padding: 5px 4px;
   }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
 
 import KitIcon from "@/components/KitIcon.vue";
 import {
@@ -242,13 +242,12 @@ const nextCheckActionIndex = (playerId: string, street: HandStreet): number => {
   return nextHandActionIndex(currentHand, street);
 };
 
-const onBetChange = (
+const commitBetChange = (
   playerId: string,
   street: HandStreet,
   actionIndex: number,
-  event: Event,
-) => {
-  const input = event.target as HTMLInputElement;
+  input: HTMLInputElement,
+): boolean => {
   const previous =
     hand.value?.players[playerId]?.bets[street]?.[actionIndex] ?? 0;
   const amount = input.value === "" ? 0 : Number(input.value);
@@ -260,7 +259,7 @@ const onBetChange = (
     input.value = String(previous);
     message.value =
       "Чек недоступен: сначала нужно поддержать текущую ставку или сбросить карты.";
-    return;
+    return false;
   }
   if (
     !pokerStore.setHandBet(
@@ -273,7 +272,7 @@ const onBetChange = (
   ) {
     input.value = String(previous);
     message.value = "Сумма ставок игрока не может превышать его стек.";
-    return;
+    return false;
   }
   if (amount === 0)
     pokerStore.setHandAction(
@@ -284,6 +283,73 @@ const onBetChange = (
       "check",
     );
   message.value = "";
+  return true;
+};
+
+const onBetChange = (
+  playerId: string,
+  street: HandStreet,
+  actionIndex: number,
+  event: Event,
+): boolean => {
+  return commitBetChange(
+    playerId,
+    street,
+    actionIndex,
+    event.target as HTMLInputElement,
+  );
+};
+
+const focusNextPlayerAction = async (
+  playerId: string,
+  actionIndex: number,
+  event: KeyboardEvent,
+): Promise<void> => {
+  event.preventDefault();
+  const input = event.currentTarget;
+  const currentHand = hand.value;
+  if (!(input instanceof HTMLInputElement) || !currentHand) return;
+
+  const street = currentHand.street;
+  if (!commitBetChange(playerId, street, actionIndex, input)) return;
+  await nextTick();
+
+  const currentPlayerIndex = handParticipants.value.findIndex(
+    (entry) => entry.id === playerId,
+  );
+  if (currentPlayerIndex < 0) return;
+
+  const inputs = Array.from(
+    document.querySelectorAll<HTMLInputElement>(
+      "[data-hand-player-id][data-hand-action-index]",
+    ),
+  );
+
+  for (const entry of handParticipants.value.slice(currentPlayerIndex + 1)) {
+    for (
+      let nextActionIndex = actionIndex;
+      nextActionIndex < streetActionCount.value;
+      nextActionIndex += 1
+    ) {
+      const candidate = inputs.find(
+        (item) =>
+          item.dataset.handPlayerId === entry.id &&
+          Number(item.dataset.handActionIndex) === nextActionIndex,
+      );
+      if (
+        !candidate ||
+        candidate.disabled ||
+        candidate.readOnly ||
+        (entry.player.bets[street][nextActionIndex] ?? 0) > 0 ||
+        entry.player.actions[street][nextActionIndex]
+      ) {
+        continue;
+      }
+
+      candidate.focus();
+      return;
+    }
+  }
 };
 
 const onCheck = (playerId: string, street: HandStreet, actionIndex: number) => {
@@ -619,6 +685,9 @@ const stageName = (street: HandStreet): string => {
                   <input
                     class="hand-bet-input"
                     type="number"
+                    data-enter-player-action
+                    :data-hand-player-id="entry.id"
+                    :data-hand-action-index="actionIndex"
                     min="0"
                     step="1"
                     :max="
@@ -640,6 +709,9 @@ const stageName = (street: HandStreet): string => {
                     "
                     @change="
                       onBetChange(entry.id, hand.street, actionIndex, $event)
+                    "
+                    @keydown.enter="
+                      focusNextPlayerAction(entry.id, actionIndex, $event)
                     "
                   />
                   <strong
@@ -1091,22 +1163,32 @@ const stageName = (street: HandStreet): string => {
   min-width: 72px;
   min-height: 36px;
   padding: 6px 10px;
-  border: 1px solid #d8c894;
+  border: 1px solid rgba(88, 186, 86, 0.55);
   border-radius: 6px;
-  background: #f6f1df;
-  color: #5d4a20;
+  background: rgba(88, 186, 86, 0.14);
+  color: #a5e8a0;
   font-size: 13px;
   font-weight: 700;
 }
 
 .hand-tracking-panel .check-action:hover {
-  background: #eee2b7;
+  background: rgba(88, 186, 86, 0.24);
+  color: #fff;
 }
 
 .hand-tracking-panel .all-in-action {
   min-height: 36px;
   padding: 6px 12px;
+  border-color: rgba(255, 120, 102, 0.62);
+  background: rgba(255, 120, 102, 0.12);
+  color: #ff9b8d;
   font-size: 12px;
+}
+
+.hand-tracking-panel .all-in-action:hover {
+  border-color: #ff7866;
+  background: rgba(255, 120, 102, 0.22);
+  color: #fff;
 }
 
 .hand-tracking-panel .hand-action-buttons .button,

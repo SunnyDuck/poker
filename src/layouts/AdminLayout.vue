@@ -44,7 +44,8 @@
     >
       <GoogleSyncPanel />
       <p id="admin-keyboard-help" class="admin__keyboard-help">
-        Enter — следующее поле · Alt + стрелки — переход между полями
+        Enter — следующее поле, в ставках — следующий игрок · Alt + стрелки —
+        переход между полями
       </p>
       <section
         v-if="!canManage"

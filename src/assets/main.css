@@ -404,7 +404,7 @@ tr:last-child td {
   color: #59665e;
   font-size: 13px;
 }
-.admin__sidebar-link.router-link-active,
+.admin__sidebar-link.admin__sidebar-link--active,
 .admin__sidebar-link:hover {
   background: var(--green-light);
   color: var(--green);
@@ -1087,10 +1087,6 @@ tr:last-child td {
   .admin__sidebar .admin__brand {
     flex: 1 0 100%;
   }
-}
-.admin__sidebar-link.router-link-active:not(.admin__sidebar-link--active) {
-  background: transparent;
-  color: #59665e;
 }
 .admin__sidebar-link.admin__sidebar-link--active,
 .admin__sidebar-link:hover {
@@ -1852,13 +1848,48 @@ td,
 .balance-positive {
   color: #8bdb83;
 }
-.hand-street-tabs button {
-  border-color: rgba(221, 238, 115, 0.45);
+.hand-street-tabs__tab {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: var(--grey-600);
   color: var(--text-secondary);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+.hand-street-tabs__tab:hover:not(.hand-street-tabs__tab--active) {
+  border-color: rgba(221, 238, 115, 0.6);
+  background: var(--grey-500);
+  color: var(--text-primary);
 }
 .hand-street-tabs__tab--active {
+  border-color: var(--lime-500);
   background: var(--lime-500);
   color: var(--grey-900);
+  box-shadow: inset 0 0 0 1px rgba(25, 28, 36, 0.12);
+}
+.hand-street-tabs__tab:focus-visible,
+.all-in-action:focus-visible,
+.check-action:focus-visible,
+.street-switch-button:focus-visible {
+  outline: 2px solid var(--lime-500);
+  outline-offset: 2px;
+}
+.hand-tracking-panel .street-switch-button:not(:disabled) {
+  border-color: rgba(221, 238, 115, 0.58);
+  color: var(--lime-500);
+}
+.hand-tracking-panel .street-switch-button:not(:disabled):hover {
+  background: rgba(221, 238, 115, 0.12);
+  border-color: var(--lime-500);
+  color: var(--text-primary);
+}
+.hand-tracking-panel .street-switch-button:disabled {
+  background: var(--surface-disabled);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 .hand-action-label {
   color: var(--yellow-500);

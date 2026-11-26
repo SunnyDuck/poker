@@ -82,6 +82,7 @@ export const useAdminKeyboardNavigation = () => {
       event.key === "Enter" &&
       !event.shiftKey &&
       target.matches(ENTER_FIELD_SELECTOR) &&
+      !target.closest("[data-enter-player-action]") &&
       !target.closest("[data-enter-submit]")
     ) {
       const fields = getAdminFields(main);
