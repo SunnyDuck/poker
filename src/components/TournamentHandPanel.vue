@@ -40,6 +40,36 @@ const distribution = computed(() =>
   hand.value ? handDistribution(hand.value) : null,
 );
 
+const playerWinsAllSelectableBanks = (playerId: string): boolean => {
+  if ((distribution.value?.pots.length ?? 0) > 1) {
+    const selectablePots = distribution.value?.pots.filter(
+      (bank) =>
+        bank.eligibleIds.length > 1 && bank.eligibleIds.includes(playerId),
+    );
+    return Boolean(
+      selectablePots?.length &&
+      selectablePots.every((bank) => bank.winnerIds.includes(playerId)),
+    );
+  }
+  return hand.value?.players[playerId]?.takesPot ?? false;
+};
+const playerCanBeSelectedForBank = (playerId: string): boolean =>
+  Boolean(
+    distribution.value?.pots.some(
+      (bank) =>
+        bank.eligibleIds.length > 1 && bank.eligibleIds.includes(playerId),
+    ),
+  );
+
+const banksAwaitingWinner = computed(
+  () =>
+    distribution.value?.pots.flatMap((bank, index) =>
+      bank.winnerIds.length
+        ? []
+        : [index === 0 ? "Основной банк" : `Побочный банк ${index}`],
+    ) ?? [],
+);
+
 const now = ref(Date.now());
 
 let clockInterval: number | undefined;
@@ -890,15 +920,17 @@ const stageName = (street: HandStreet): string => {
                 <input
                   type="checkbox"
                   :aria-label="`${entry.name} забирает банк`"
-                  :checked="entry.player.takesPot"
                   :disabled="
-                    entry.player.folded || (distribution?.pots.length ?? 0) > 1
+                    entry.player.folded ||
+                    ((distribution?.pots.length ?? 0) > 1 &&
+                      !playerCanBeSelectedForBank(entry.id))
                   "
                   :title="
                     (distribution?.pots.length ?? 0) > 1
-                      ? 'Выберите победителей отдельных банков ниже'
+                      ? 'Отметить победителем во всех доступных банках; уточнить выбор можно ниже'
                       : ''
                   "
+                  :checked="playerWinsAllSelectableBanks(entry.id)"
                   @change="
                     pokerStore.setHandWinner(
                       tournament,
@@ -927,6 +959,20 @@ const stageName = (street: HandStreet): string => {
       </div>
 
       <div v-if="distribution" class="pot-distribution">
+        <p
+          v-if="banksAwaitingWinner.length"
+          class="fine-print pot-winner-hint"
+          role="status"
+        >
+          Чтобы завершить раздачу, выберите победителей:
+          {{ banksAwaitingWinner.join(", ") }}. Кнопка начисления банка станет
+          доступна, когда победители будут выбраны во всех банках.
+        </p>
+        <p v-if="distribution.pots.length > 1" class="fine-print">
+          Чекбокс «Забирает» отмечает игрока победителем во всех банках, где он
+          может выиграть. Ниже можно выбрать победителя отдельно для каждого
+          банка.
+        </p>
         <div v-if="distribution.pots.length > 1" class="side-pot-list">
           <fieldset v-for="(bank, index) in distribution.pots" :key="bank.id">
             <legend>

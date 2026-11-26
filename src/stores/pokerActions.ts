@@ -479,6 +479,23 @@ export const createPokerActions = (state: DemoState) => {
     const player = hand?.players[playerId];
     if (!hand || !player || player.folded) return;
     player.takesPot = takesPot;
+    const distribution = handDistribution(hand);
+    if (distribution.pots.length > 1) {
+      hand.potWinners ??= {};
+      for (const pot of distribution.pots) {
+        if (pot.eligibleIds.length <= 1 || !pot.eligibleIds.includes(playerId))
+          continue;
+        const winners = new Set(hand.potWinners[pot.id] ?? pot.winnerIds);
+        if (takesPot) winners.add(playerId);
+        else winners.delete(playerId);
+        hand.potWinners[pot.id] = [...winners];
+      }
+      recordHandEvent(
+        hand,
+        `${playerName(playerId)}: ${takesPot ? "выбран" : "снят"} победителем доступных банков`,
+      );
+      return;
+    }
     delete hand.potWinners;
   };
 
