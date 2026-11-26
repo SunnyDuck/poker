@@ -22,8 +22,10 @@ import {
   playerStreetContribution,
   projectedStack,
   streetActionRequirements,
+  tournamentChipsInPlay,
   tournamentPrizePool,
 } from "@/domain/game";
+import { calculateStandings, placePoints } from "@/domain/rating";
 import { formatCountdown, formatKrasnoyarskDateTime } from "@/domain/time";
 import type { HandStreet, PokerActionType, Tournament } from "@/domain/types";
 import { usePokerStore } from "@/stores/poker";
@@ -160,6 +162,63 @@ const totalCashIn = computed(() =>
 const displayedPrizePool = computed(() =>
   tournamentPrizePool(props.tournament),
 );
+const currentTournamentTable = computed(() => {
+  const game = props.tournament;
+  const eliminated = game.participantIds.filter(
+    (id) => game.places[id] != null,
+  ).length;
+  const activePlayers = participants.value
+    .filter(({ id }) => game.places[id] == null)
+    .slice()
+    .sort(
+      (left, right) =>
+        (game.stacks[right.id] ?? 0) - (game.stacks[left.id] ?? 0) ||
+        game.participantIds.indexOf(left.id) -
+          game.participantIds.indexOf(right.id),
+    );
+  const activePlaces = new Map(
+    activePlayers.map(({ id }, index) => [id, eliminated + index + 1]),
+  );
+  const seasonPoints = new Map(
+    calculateStandings({
+      ...pokerStore.state,
+      tournaments: pokerStore.state.tournaments.filter(
+        (tournament) => tournament.id !== game.id,
+      ),
+    }).map(({ player, points }) => [player.id, points]),
+  );
+
+  return participants.value
+    .map((player) => {
+      const place = game.places[player.id] ?? activePlaces.get(player.id) ?? 0;
+      const tournamentPoints =
+        placePoints(place) + Math.min(game.rebuys[player.id] ?? 0, 1);
+      const stack = game.stacks[player.id] ?? 0;
+      const payout = playerCashout(game, player.id, stack);
+
+      return {
+        ...player,
+        place,
+        stack,
+        tournamentPoints,
+        totalPoints: (seasonPoints.get(player.id) ?? 0) + tournamentPoints,
+        payout,
+        payoutShare: displayedPrizePool.value
+          ? (payout / displayedPrizePool.value) * 100
+          : 0,
+      };
+    })
+    .sort((left, right) => left.place - right.place);
+});
+const currentDistributionTotals = computed(() =>
+  currentTournamentTable.value.reduce(
+    (totals, player) => ({
+      payout: totals.payout + player.payout,
+      payoutShare: totals.payoutShare + player.payoutShare,
+    }),
+    { payout: 0, payoutShare: 0 },
+  ),
+);
 const handHistory = computed(() =>
   props.tournament.hands
     .filter((item) => item.settled)
@@ -194,20 +253,6 @@ const actionLabels: Record<PokerActionType, string> = {
   "all-in": "Олл-ин",
   "small-blind": "МБ",
   "big-blind": "ББ",
-};
-
-const currentStack = (playerId: string): number => {
-  return hand.value
-    ? projectedStack(props.tournament, hand.value, playerId)
-    : (props.tournament.stacks[playerId] ?? 0);
-};
-
-const estimatedCashout = (playerId: string): number => {
-  return playerCashout(props.tournament, playerId, currentStack(playerId));
-};
-
-const estimatedNetBalance = (playerId: string): number => {
-  return playerNetBalance(props.tournament, playerId, currentStack(playerId));
 };
 
 const availableForAction = (
@@ -385,19 +430,42 @@ const onCheck = (playerId: string, street: HandStreet, actionIndex: number) => {
 const onAllIn = (playerId: string) => {
   const currentHand = hand.value;
   const player = currentHand?.players[playerId];
-  if (
-    !currentHand ||
-    !player ||
-    player.folded ||
-    isPlayerAllIn(props.tournament, currentHand, playerId)
-  )
+  if (!currentHand || !player || player.folded) return;
+
+  const street = currentHand.street;
+  const existingAllInIndex = player.actions[street].findIndex(
+    (action) => action === "all-in",
+  );
+  if (existingAllInIndex >= 0) {
+    if (
+      !pokerStore.setHandBet(
+        props.tournament,
+        playerId,
+        street,
+        existingAllInIndex,
+        0,
+      )
+    ) {
+      message.value = "Не удалось отменить олл-ин.";
+      return;
+    }
+    message.value = `Олл-ин игрока ${participants.value.find((entry) => entry.id === playerId)?.name ?? "Игрок"} отменён.`;
     return;
+  }
+  if (isPlayerAllIn(props.tournament, currentHand, playerId)) {
+    message.value =
+      "Олл-ин выставлен на предыдущей улице. Перейдите на неё, чтобы отменить действие.";
+    return;
+  }
 
   const amount = projectedStack(props.tournament, currentHand, playerId);
   if (amount <= 0) return;
 
-  const street = currentHand.street;
-  const actionIndex = nextHandActionIndex(currentHand, street);
+  const emptyActionIndex = player.bets[street].findIndex(
+    (bet, index) => bet === 0 && !player.actions[street][index],
+  );
+  const actionIndex =
+    emptyActionIndex < 0 ? player.bets[street].length : emptyActionIndex;
   while (actionIndex >= player.bets[street].length) {
     if (!pokerStore.addHandBetActionColumn(props.tournament, street)) {
       message.value = "Не удалось добавить столбец действия для олл-ина.";
@@ -761,15 +829,24 @@ const stageName = (street: HandStreet): string => {
                 <button
                   v-if="
                     !entry.player.folded &&
-                    !isPlayerAllIn(tournament, hand, entry.id) &&
-                    projectedStack(tournament, hand, entry.id) > 0
+                    (entry.player.actions[hand.street].includes('all-in') ||
+                      (!isPlayerAllIn(tournament, hand, entry.id) &&
+                        projectedStack(tournament, hand, entry.id) > 0))
                   "
                   class="text-button all-in-action"
                   type="button"
-                  :aria-label="`Выставить олл-ин: ${entry.name}, ${chipFormat.format(projectedStack(tournament, hand, entry.id))} фишек`"
+                  :aria-label="
+                    entry.player.actions[hand.street].includes('all-in')
+                      ? `Отменить олл-ин: ${entry.name}`
+                      : `Выставить олл-ин: ${entry.name}, ${chipFormat.format(projectedStack(tournament, hand, entry.id))} фишек`
+                  "
                   @click="onAllIn(entry.id)"
                 >
-                  Олл-ин
+                  {{
+                    entry.player.actions[hand.street].includes("all-in")
+                      ? "Отменить олл-ин"
+                      : "Олл-ин"
+                  }}
                 </button>
               </td>
               <td>
@@ -1010,37 +1087,53 @@ const stageName = (street: HandStreet): string => {
         <thead>
           <tr>
             <th>Игрок</th>
+            <th>Место</th>
             <th>Входы</th>
             <th>Внесено</th>
             <th>Фишки</th>
+            <th>Очки турнира</th>
+            <th>Всего очков</th>
             <th>К выплате</th>
+            <th>Доля банка</th>
             <th>Баланс</th>
             <th>Действие</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="player in participants" :key="player.id">
+          <tr v-for="player in currentTournamentTable" :key="player.id">
             <th scope="row">
               {{ player.name
               }}<small v-if="tournament.places[player.id] != null"
                 >Место {{ tournament.places[player.id] }}</small
               >
             </th>
+            <td>{{ player.place || "—" }}</td>
             <td>{{ 1 + (tournament.rebuys[player.id] ?? 0) }}</td>
             <td>
               {{ cashFormat.format(playerInvestment(tournament, player.id)) }} ₽
             </td>
-            <td>{{ chipFormat.format(currentStack(player.id)) }}</td>
-            <td>{{ cashFormat.format(estimatedCashout(player.id)) }} ₽</td>
+            <td>{{ chipFormat.format(player.stack) }}</td>
+            <td>{{ player.tournamentPoints }}</td>
+            <td>{{ player.totalPoints }}</td>
+            <td>{{ cashFormat.format(player.payout) }} ₽</td>
+            <td>{{ player.payoutShare.toFixed(1) }}%</td>
             <td
               :class="
-                estimatedNetBalance(player.id) >= 0
+                playerNetBalance(tournament, player.id, player.stack) >= 0
                   ? 'balance-positive'
                   : 'balance-negative'
               "
             >
-              {{ estimatedNetBalance(player.id) > 0 ? "+" : ""
-              }}{{ cashFormat.format(estimatedNetBalance(player.id)) }} ₽
+              {{
+                playerNetBalance(tournament, player.id, player.stack) > 0
+                  ? "+"
+                  : ""
+              }}{{
+                cashFormat.format(
+                  playerNetBalance(tournament, player.id, player.stack),
+                )
+              }}
+              ₽
             </td>
             <td class="player-game-action">
               <template
@@ -1084,16 +1177,23 @@ const stageName = (street: HandStreet): string => {
           <tr>
             <th>Итого</th>
             <td>—</td>
+            <td>—</td>
             <td>{{ cashFormat.format(totalCashIn) }} ₽</td>
-            <td colspan="4"></td>
+            <td>{{ chipFormat.format(tournamentChipsInPlay(tournament)) }}</td>
+            <td>—</td>
+            <td>—</td>
+            <td>{{ cashFormat.format(currentDistributionTotals.payout) }} ₽</td>
+            <td>{{ currentDistributionTotals.payoutShare.toFixed(1) }}%</td>
+            <td colspan="2"></td>
           </tr>
         </tfoot>
       </table>
     </div>
     <p class="fine-print">
-      Все игроки начинают с одинаковым взносом и стеком. Выплата считается
-      пропорционально фишкам в стеке; незавершённый банк ещё не распределён.
-      Вылет подтверждается после раздачи, место присваивается автоматически.
+      Место и очки в текущем турнире предварительные, пока игра не завершена.
+      Выплата считается по последним зафиксированным стекам; банк текущей
+      раздачи распределится после её завершения. Вылет подтверждается после
+      раздачи.
     </p>
   </section>
 </template>

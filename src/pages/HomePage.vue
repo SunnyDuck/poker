@@ -21,6 +21,10 @@ const upcoming = computed(
       .sort((a, b) => a.date.localeCompare(b.date))[0],
 );
 const standings = computed(() => calculateStandings(pokerStore.state));
+const standingsPoints = computed(
+  () =>
+    new Map(standings.value.map(({ player, points }) => [player.id, points])),
+);
 const completedTournaments = computed(() =>
   pokerStore.state.tournaments.filter(
     (tournament) => tournament.status === "finished",
@@ -79,6 +83,7 @@ const playerStatistics = computed(() =>
       );
       return {
         player,
+        points: standingsPoints.value.get(player.id) ?? 0,
         tournaments: playedTournaments.length,
         wins: playedTournaments.filter(
           (tournament) => tournament.places[player.id] === 1,
@@ -285,6 +290,7 @@ const statusLabel = (status: string) => {
           <thead>
             <tr>
               <th>Игрок</th>
+              <th>Очки</th>
               <th>Турниров</th>
               <th>Турнирных побед</th>
               <th>Топ-3</th>
@@ -300,6 +306,7 @@ const statusLabel = (status: string) => {
           <tbody>
             <tr v-for="stats in playerStatistics" :key="stats.player.id">
               <td>{{ stats.player.name }}</td>
+              <td class="score">{{ stats.points }}</td>
               <td>{{ stats.tournaments }}</td>
               <td>{{ stats.wins }}</td>
               <td>{{ stats.podiums }}</td>
