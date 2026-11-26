@@ -378,7 +378,7 @@ function writeTournamentSheet_(spreadsheet, tournament, playerNames) {
     ['Статус', statusToSheet_(tournament.status)],
     ['Взнос, ₽', tournament.buyIn],
     ['Стартовый стек', tournament.startingStack],
-    ['Стоимость докупки, ₽', tournament.buyIn],
+    ['Стоимость докупки, ₽', tournament.rebuyCost],
     ['Лимит докупок', tournament.maxRebuys],
     ['Докупки до', tournament.rebuyUntil],
     ['Текущий уровень', Number(tournament.currentLevel) + 1],
