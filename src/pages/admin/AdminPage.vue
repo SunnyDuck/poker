@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { createTournament, googleSyncStatus, resetDemo, state } from '@/stores/poker'
+import { formatTournamentDate } from '@/domain/time'
+import KitIcon from '@/components/KitIcon.vue'
 
 const router = useRouter()
 function addTournament() {
@@ -11,7 +13,7 @@ function statusLabel(status: string) {
   return status === 'live' ? 'Идёт сейчас' : status === 'finished' ? 'Завершён' : 'Предстоит'
 }
 function dateLabel(date: string) {
-  return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${date}T12:00:00`))
+  return formatTournamentDate(date, false, true)
 }
 </script>
 
@@ -20,7 +22,7 @@ function dateLabel(date: string) {
     <div><div class="eyebrow">СЕЗОН 1</div><h1>Управление турнирами</h1><p class="muted">{{ googleSyncStatus === 'local' ? 'Изменения сохраняются в этом браузере.' : 'Изменения синхронизируются с Google Таблицей.' }}</p></div>
     <div class="admin-header-actions">
       <RouterLink class="button button-outline" to="/admin/participants">Участники сезона</RouterLink>
-      <button class="button button-dark" @click="addTournament">＋ Новый турнир</button>
+      <button class="button button-dark" @click="addTournament">Новый турнир</button>
     </div>
   </div>
   <div v-if="googleSyncStatus === 'local'" class="notice"><strong>Локальный режим.</strong> Пока адрес Google Таблицы не настроен, изменения видны только в этом браузере.</div>

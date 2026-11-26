@@ -9,7 +9,7 @@ const READABLE_SCHEMA_VERSION = 'readable-v1'
 const ADMIN_KEY_PROPERTY = 'FRIENDLY_POKER_ADMIN_KEY'
 const SPREADSHEET_ID_PROPERTY = 'FRIENDLY_POKER_SPREADSHEET_ID'
 const MAX_STATE_LENGTH = 450000
-const API_VERSION = 5
+const API_VERSION = 6
 const KRASNOYARSK_TIME_ZONE = 'Asia/Krasnoyarsk'
 const TOURNAMENT_SECTION_ROW = 16
 const TABLE_HEADER_ROW = 17
@@ -195,6 +195,11 @@ function readTournamentSheet_(sheet) {
     levels: [],
   }
   if (!Number.isFinite(tournament.timerStartedAt)) tournament.timerStartedAt = null
+  const tournamentExtras = readJsonChunks_(sheet, 6, 12)
+  if (tournamentExtras) {
+    if (Array.isArray(tournamentExtras.operationHistory)) tournament.operationHistory = tournamentExtras.operationHistory
+    if (Number.isFinite(tournamentExtras.startedAt)) tournament.startedAt = tournamentExtras.startedAt
+  }
 
   const lastRow = sheet.getLastRow()
   if (lastRow >= storedDataRow) {
@@ -248,7 +253,8 @@ function readTournamentSheet_(sheet) {
       const hasFoldStreet = sheet.getMaxColumns() >= 33 && String(sheet.getRange(TABLE_HEADER_ROW, 33).getValue()) === 'Фолд на улице'
       const handRows = sheet.getRange(storedDataRow, 17, rowCount, hasFoldStreet ? 17 : hasActionDetails ? 16 : hasRoles ? 12 : 11).getValues()
       const handsByNumber = {}
-      handRows.forEach(function (row) {
+      const handExtrasByNumber = {}
+      handRows.forEach(function (row, rowIndex) {
         const number = Number(row[0])
         const id = String(row[1] || '')
         if (!Number.isFinite(number) || number < 1 || !id) return
@@ -260,6 +266,11 @@ function readTournamentSheet_(sheet) {
             settled: row[10] === true || String(row[10]).toLocaleLowerCase() === 'да',
             roles: null,
           }
+          const extras = readJsonChunks_(sheet, storedDataRow + rowIndex, 34) || {}
+          handExtrasByNumber[number] = extras
+          ;['bigBlind', 'potWinners', 'settlement', 'startedAt', 'endedAt', 'events'].forEach(function (key) {
+            if (Object.prototype.hasOwnProperty.call(extras, key)) handsByNumber[number][key] = extras[key]
+          })
         }
         const streetTotals = {
           preflop: Number(row[3]) || 0,
@@ -287,9 +298,9 @@ function readTournamentSheet_(sheet) {
           foldedOn: hasFoldStreet && ['preflop', 'flop', 'turn', 'river'].indexOf(savedFoldStreet) >= 0 ? savedFoldStreet : null,
           takesPot: row[8] === true || String(row[8]).toLocaleLowerCase() === 'да',
         }
-        if (parsedActions && Object.keys(parsedActions).some(function (street) {
+        if (parsedActions && ((handExtrasByNumber[number].actionPlayerIds || []).indexOf(id) >= 0 || Object.keys(parsedActions).some(function (street) {
           return parsedActions[street].actions.some(function (action) { return action !== null })
-        })) {
+        }))) {
           playerState.actions = {
             preflop: parsedActions.preflop.actions,
             flop: parsedActions.flop.actions,
@@ -381,6 +392,10 @@ function writeTournamentSheet_(spreadsheet, tournament, playerNames) {
   sheet.getRange(1, 1, metadata.length, 2).setValues(metadata)
   sheet.getRange(2, 11, 1, 2).setValues([['Учёт раздач', tournament.gameInitialized ? 'Да' : 'Нет']])
   sheet.getRange(4, 11, 1, 2).setValues([['Первый дилер (ID)', tournament.initialDealerId || '']])
+  const tournamentExtras = {}
+  if (tournament.operationHistory !== undefined) tournamentExtras.operationHistory = tournament.operationHistory
+  if (tournament.startedAt != null && tournament.startedAt % 1000 !== 0) tournamentExtras.startedAt = tournament.startedAt
+  if (Object.keys(tournamentExtras).length) writeJsonChunks_(sheet, 6, 12, tournamentExtras)
   sheet.getRange(1, 1, 1, 2).setFontWeight('bold').setBackground('#dfe9e2')
   sheet.getRange(2, 1, metadata.length - 1, 1).setFontWeight('bold')
   sheet.getRange(TOURNAMENT_SECTION_ROW, 1, 1, 3).setValues([['УЧАСТНИКИ', '', '']])
@@ -413,7 +428,15 @@ function writeTournamentSheet_(spreadsheet, tournament, playerNames) {
   if (playerStates.length) sheet.getRange(TABLE_DATA_ROW, 11, playerStates.length, 6).setValues(playerStates)
 
   const handRows = []
+  const handExtras = []
   ;(tournament.hands || []).forEach(function (hand) {
+    const extras = {}
+    ;['bigBlind', 'potWinners', 'settlement', 'startedAt', 'endedAt', 'events'].forEach(function (key) {
+      if (Object.prototype.hasOwnProperty.call(hand, key)) extras[key] = hand[key]
+    })
+    const actionPlayerIds = Object.keys(hand.players || {}).filter(function (id) { return Boolean(hand.players[id].actions) })
+    if (actionPlayerIds.length) extras.actionPlayerIds = actionPlayerIds
+    if (Object.keys(extras).length) handExtras.push({ row: TABLE_DATA_ROW + handRows.length, value: extras })
     Object.keys(hand.players || {}).forEach(function (id) {
       const player = hand.players[id]
       handRows.push([
@@ -442,6 +465,7 @@ function writeTournamentSheet_(spreadsheet, tournament, playerNames) {
     if (sheet.getMaxRows() < requiredLastRow) sheet.insertRowsAfter(sheet.getMaxRows(), requiredLastRow - sheet.getMaxRows())
     sheet.getRange(TABLE_DATA_ROW, 17, handRows.length, 17).setValues(handRows)
   }
+  handExtras.forEach(function (entry) { writeJsonChunks_(sheet, entry.row, 34, entry.value) })
 
   const levels = tournament.levels.map(function (level, index) {
     return [index + 1, level.small, level.big, level.minutes, level.break ? 'Да' : 'Нет']
@@ -492,10 +516,38 @@ function writeTournamentSheet_(spreadsheet, tournament, playerNames) {
   sheet.hideColumns(4)
   sheet.hideColumns(15)
   sheet.hideColumns(18)
+  if (sheet.getMaxColumns() >= 34) sheet.hideColumns(34, sheet.getMaxColumns() - 33)
   sheet.showRows(1, Math.max(sheet.getLastRow(), TABLE_HEADER_ROW))
   sheet.hideRows(3)
   if (participants.length) sheet.getRange(TABLE_HEADER_ROW, 1, participants.length + 1, 4).createFilter()
   sheet.setTabColor('#537b61')
+}
+
+// Keep financial metadata lossless without exceeding the 50,000-character limit of a cell.
+// Human-readable player, action and blind tables remain authoritative for their own fields.
+function writeJsonChunks_(sheet, row, column, value) {
+  const json = 'json:' + JSON.stringify(value)
+  const chunks = []
+  for (let start = 0; start < json.length;) {
+    let end = Math.min(start + 40000, json.length)
+    const lastCode = json.charCodeAt(end - 1)
+    if (end < json.length && lastCode >= 0xd800 && lastCode <= 0xdbff) end -= 1
+    chunks.push(json.slice(start, end))
+    start = end
+  }
+  const lastColumn = column + chunks.length - 1
+  if (sheet.getMaxColumns() < lastColumn) sheet.insertColumnsAfter(sheet.getMaxColumns(), lastColumn - sheet.getMaxColumns())
+  if (sheet.getMaxRows() < row) sheet.insertRowsAfter(sheet.getMaxRows(), row - sheet.getMaxRows())
+  sheet.getRange(row, column, 1, chunks.length).setNumberFormat('@').setValues([chunks])
+}
+
+function readJsonChunks_(sheet, row, column) {
+  if (sheet.getMaxColumns() < column) return null
+  const values = sheet.getRange(row, column, 1, sheet.getMaxColumns() - column + 1).getValues()[0]
+  if (String(values[0] || '').indexOf('json:') !== 0) return null
+  const chunks = []
+  for (let index = 0; index < values.length && values[index] !== ''; index += 1) chunks.push(String(values[index]))
+  return JSON.parse(chunks.join('').slice(5))
 }
 
 function writeActionsSheet_(spreadsheet, tournaments, playerNames) {
@@ -559,7 +611,7 @@ function streetTotal_(bets, street) {
 function streetActionsForSheet_(bets, actionTypes, street) {
   const actions = streetActions_(bets, street)
   const types = actionTypes && Array.isArray(actionTypes[street]) ? actionTypes[street] : []
-  if (actions.every(function (amount) { return amount === 0 }) && types.every(function (type) { return !type })) return ''
+  if (actions.length <= 3 && types.length <= 3 && actions.every(function (amount) { return amount === 0 }) && types.every(function (type) { return !type })) return ''
   const labels = { check: 'Чек', call: 'Колл', bet: 'Ставка', raise: 'Рейз', 'all-in': 'Олл-ин', 'small-blind': 'МБ', 'big-blind': 'ББ' }
   return actions.map(function (amount, index) {
     const label = labels[types[index]]

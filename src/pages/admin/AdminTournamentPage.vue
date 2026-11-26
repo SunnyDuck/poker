@@ -1,14 +1,46 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { formatKrasnoyarskDateTime } from '@/domain/time'
 import { rolesForHand } from '@/domain/game'
+import KitIcon from '@/components/KitIcon.vue'
 import TournamentHandPanel from '@/components/TournamentHandPanel.vue'
+import TournamentClock from '@/components/TournamentClock.vue'
+import { tournamentSettingsErrors } from '@/domain/validation'
 import { finishTournament, findTournament, getCurrentHand, googleSyncStatus, moveParticipant, nextLevel, pauseTimer, setInitialRole, startTimer, state, toggleParticipant } from '@/stores/poker'
 import type { InitialRole } from '@/stores/poker'
 
 const route = useRoute()
 const tournament = computed(() => findTournament(String(route.params.id)))
+const settingsErrors = computed(() => tournament.value && !tournament.value.gameInitialized ? tournamentSettingsErrors(tournament.value) : [])
+const controlMessage = ref('')
+
+function changeLevel() {
+  if (tournament.value) nextLevel(tournament.value)
+}
+
+function finishGame() {
+  if (!tournament.value || !window.confirm('Завершить турнир и распределить оставшиеся места по стекам?')) return
+  finishTournament(tournament.value)
+}
+
+function startGame() {
+  controlMessage.value = tournament.value && !startTimer(tournament.value) ? 'Проверьте настройки и оставшееся время уровня.' : ''
+}
+
+function addLevel(isBreak: boolean) {
+  const game = tournament.value
+  if (!game || game.gameInitialized) return
+  const previous = [...game.levels].reverse().find((level) => !level.break)
+  game.levels.push(isBreak ? { small: 0, big: 0, minutes: 10, break: true }
+    : { small: (previous?.small ?? 25) * 2, big: (previous?.big ?? 50) * 2, minutes: previous?.minutes ?? 20 })
+}
+
+function removeLevel(index: number) {
+  const game = tournament.value
+  if (!game || game.gameInitialized || game.levels.length <= 1) return
+  game.levels.splice(index, 1)
+}
 const selectedCount = computed(() => tournament.value?.participantIds.length ?? 0)
 const participantRows = computed(() => {
   const game = tournament.value
@@ -68,6 +100,7 @@ function statusLabel(status: string) {
       <div class="field-row"><label class="field">Единый взнос, ₽<input v-model.number="tournament.buyIn" type="number" min="0" :disabled="tournament.gameInitialized"></label><label class="field">Стартовый стек для всех<input v-model.number="tournament.startingStack" type="number" min="1" :disabled="tournament.gameInitialized"></label></div>
       <div class="field-row"><label class="field">Докупок на игрока<input v-model.number="tournament.maxRebuys" type="number" min="0" max="5" :disabled="tournament.gameInitialized"></label><div class="field"><span>Цена докупки</span><strong>По единому взносу: {{ tournament.buyIn }} ₽</strong></div></div>
       <label class="field">Докупка до (Красноярск)<input v-model="tournament.rebuyUntil" type="time" :disabled="tournament.gameInitialized"></label>
+      <ul v-if="settingsErrors.length" class="validation-errors" role="alert"><li v-for="error in settingsErrors" :key="error">{{ error }}</li></ul>
     </section>
 
     <section v-if="!tournament.gameInitialized" class="panel">
@@ -101,13 +134,16 @@ function statusLabel(status: string) {
       <div class="game-management-controls">
         <div class="eyebrow">ХОД ТУРНИРА</div><h2>Управление игрой</h2>
         <div class="control-status"><span class="status" :class="`status-${tournament.status}`">{{ statusLabel(tournament.status) }}</span><span>Уровень {{ tournament.currentLevel + 1 }}</span></div>
+        <TournamentClock v-if="tournament.gameInitialized" :tournament="tournament" />
         <div class="control-actions">
-          <button v-if="tournament.timerStartedAt === null && tournament.status !== 'finished'" class="button button-dark" :disabled="tournament.participantIds.length < 2 || (!tournament.gameInitialized && !tournament.initialDealerId)" @click="startTimer(tournament)">{{ tournament.status === 'live' ? 'Продолжить таймер' : 'Начать турнир' }}</button>
+          <button v-if="tournament.timerStartedAt === null && tournament.status !== 'finished'" class="button button-dark" :disabled="settingsErrors.length > 0 || (tournament.gameInitialized && tournament.secondsRemaining <= 0)" @click="startGame">{{ tournament.status === 'live' ? 'Продолжить таймер' : 'Начать турнир' }}</button>
           <button v-else-if="tournament.status !== 'finished'" class="button button-outline" @click="pauseTimer(tournament)">Пауза</button>
-          <button class="button button-outline" :disabled="tournament.status === 'finished'" @click="nextLevel(tournament)">Следующий уровень</button>
-          <button v-if="tournament.status !== 'finished'" class="button button-danger" :disabled="!tournament.gameInitialized || Boolean(getCurrentHand(tournament))" @click="finishTournament(tournament)">Завершить турнир</button>
+          <button class="button button-outline" :disabled="tournament.status !== 'live' || tournament.currentLevel >= tournament.levels.length - 1" @click="changeLevel">Следующий уровень</button>
+          <button v-if="tournament.status !== 'finished'" class="button button-danger" :disabled="!tournament.gameInitialized || Boolean(getCurrentHand(tournament))" @click="finishGame">Завершить турнир</button>
         </div>
         <p v-if="!tournament.gameInitialized && !tournament.initialDealerId" class="fine-print">Чтобы начать турнир, назначьте стартовую роль одному из участников.</p>
+        <p class="fine-print">Блайнды и перерывы переключаются только вручную. При переходе работающий таймер продолжает отсчёт нового уровня; пауза сохраняется. Блайнды уже начатой раздачи не меняются.</p>
+        <p v-if="controlMessage" role="status">{{ controlMessage }}</p>
         <p class="fine-print">Таймер и текущий уровень отображаются на табло. {{ googleSyncStatus === 'local' ? 'В локальном режиме синхронизация работает только между вкладками этого браузера.' : 'При подключённой Google Таблице данные обновляются на других устройствах примерно раз в 30 секунд.' }}</p>
       </div>
       <div class="blind-levels-section">
@@ -115,11 +151,17 @@ function statusLabel(status: string) {
         <div class="blind-list">
           <div v-for="(level, index) in tournament.levels" :key="index" class="blind-row">
             <span>{{ level.break ? 'Перерыв' : `Уровень ${index + 1}` }}</span>
-            <strong v-if="!level.break">{{ level.small }} / {{ level.big }}</strong><strong v-else>—</strong>
-            <span>{{ level.minutes }} мин</span>
+            <template v-if="!tournament.gameInitialized">
+              <label v-if="!level.break">МБ<input v-model.number="level.small" type="number" min="1" :aria-label="`Этап ${index + 1}: малый блайнд`"></label>
+              <label v-if="!level.break">ББ<input v-model.number="level.big" type="number" min="1" :aria-label="`Этап ${index + 1}: большой блайнд`"></label>
+              <label>Минуты<input v-model.number="level.minutes" type="number" min="1" max="240" :aria-label="`Этап ${index + 1}: минуты`"></label>
+              <button class="text-button danger-text" :disabled="tournament.levels.length <= 1" :aria-label="`Удалить этап ${index + 1}`" @click="removeLevel(index)">Удалить</button>
+            </template>
+            <template v-else><strong v-if="!level.break">{{ level.small }} / {{ level.big }}</strong><strong v-else>—</strong><span>{{ level.minutes }} мин</span></template>
           </div>
         </div>
-        <p class="fine-print">Список взят из положения сезона; редактирование структуры добавим отдельно.</p>
+        <div v-if="!tournament.gameInitialized" class="control-actions"><button class="button button-outline" @click="addLevel(false)">Уровень</button><button class="button button-outline" @click="addLevel(true)"><KitIcon name="add" />Перерыв</button></div>
+        <p class="fine-print">{{ tournament.gameInitialized ? 'Структура зафиксирована при старте турнира.' : 'Перед стартом можно изменить блайнды и длительность этапов, добавить уровень или перерыв.' }}</p>
       </div>
     </section>
 
@@ -127,3 +169,10 @@ function statusLabel(status: string) {
   </div>
   <div v-else class="empty-state"><strong>Турнир не найден</strong><RouterLink to="/admin" class="text-link">Вернуться к турнирам</RouterLink></div>
 </template>
+
+<style scoped>
+.blind-row:has(input){display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.blind-row label{display:grid;gap:2px;font-size:11px}
+.blind-row input{width:80px;max-width:100%;padding:6px;border:1px solid var(--line);border-radius:4px}
+.validation-errors{padding-left:20px;color:#a53226;font-size:12px}
+</style>

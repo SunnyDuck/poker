@@ -1,16 +1,27 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { formatKrasnoyarskDateTime } from '@/domain/time'
+import { formatKrasnoyarskDateTime, formatTournamentDate } from '@/domain/time'
 import { handPot, handStreets, isPlayerAllIn, playerStreetContribution, projectedStack, rolesForHand } from '@/domain/game'
 import { currentSeconds, findTournament, getCurrentHand, state } from '@/stores/poker'
+import KitIcon from '@/components/KitIcon.vue'
+import pokerChip from '@/assets/poker/chips.svg'
 
 const route = useRoute()
 const tournament = computed(() => findTournament(String(route.params.id)))
 const now = ref(Date.now())
+const compactTable = ref(false)
 let interval: number | undefined
-onMounted(() => { interval = window.setInterval(() => { now.value = Date.now() }, 1000) })
-onUnmounted(() => { if (interval) window.clearInterval(interval) })
+function updateCompactTable() { compactTable.value = window.innerWidth <= 680 }
+onMounted(() => {
+  updateCompactTable()
+  window.addEventListener('resize', updateCompactTable)
+  interval = window.setInterval(() => { now.value = Date.now() }, 200)
+})
+onUnmounted(() => {
+  if (interval) window.clearInterval(interval)
+  window.removeEventListener('resize', updateCompactTable)
+})
 
 const currentLevel = computed(() => tournament.value?.levels[tournament.value.currentLevel])
 const nextLevel = computed(() => tournament.value?.levels[tournament.value.currentLevel + 1])
@@ -24,6 +35,7 @@ const countdown = computed(() => {
   const secondsPart = (seconds % 60).toString().padStart(2, '0')
   return `${minutesPart}:${secondsPart}`
 })
+const expired = computed(() => tournament.value?.status === 'live' && tournament.value.gameInitialized && remainingSeconds.value === 0)
 const numberFormat = new Intl.NumberFormat('ru-RU')
 const currentHand = computed(() => tournament.value ? getCurrentHand(tournament.value) : undefined)
 const lastHand = computed(() => tournament.value?.hands.at(-1))
@@ -41,6 +53,12 @@ const gameRoster = computed(() => {
   if (!currentTournament) return []
 
   const count = currentTournament.participantIds.length
+  const maximumStack = Math.max(1, ...currentTournament.participantIds.map((id) => {
+    const player = currentHand.value?.players[id]
+    return player && currentHand.value
+      ? projectedStack(currentTournament, currentHand.value, id)
+      : currentTournament.stacks[id] ?? 0
+  }))
   return currentTournament.participantIds.map((id, index) => {
     const player = currentHand.value?.players[id]
     const angle = (360 / Math.max(count, 1)) * index - 90
@@ -53,43 +71,78 @@ const gameRoster = computed(() => {
     const stack = currentHand.value
       ? projectedStack(currentTournament, currentHand.value, id)
       : currentTournament.stacks[id] ?? 0
+    const chipCount = stack > 0 ? Math.max(3, Math.min(12, Math.round(Math.sqrt(stack / maximumStack) * 12))) : 0
+    const chipTowers = [0, 0, 0]
+    for (let chip = 0; chip < chipCount; chip += 1) {
+      const tower = chip % chipTowers.length
+      chipTowers[tower] = (chipTowers[tower] ?? 0) + 1
+    }
+    const stackLabel = currentTournament.places[id] === 1
+      ? `Победитель · ${numberFormat.format(stack)}`
+      : currentTournament.places[id] != null
+        ? `Место ${currentTournament.places[id]}`
+        : currentTournament.gameInitialized
+          ? numberFormat.format(stack)
+          : 'Ожидает старта'
+    const diagonal = Math.abs(Math.cos(radians)) > .5 && Math.abs(Math.sin(radians)) > .5
+    const chipXRadius = compactTable.value ? 30 : !compactTable.value && diagonal && Math.sin(radians) < 0 ? 26 : 32
+    const chipYRadius = compactTable.value
+      ? 36
+      : diagonal && Math.sin(radians) < 0 ? 20 : diagonal && Math.sin(radians) > 0 ? 27 : 29
 
     return {
       id,
       name: state.players.find((person) => person.id === id)?.name ?? 'Участник',
       stack,
+      stackLabel,
+      showChipUnit: currentTournament.gameInitialized && currentTournament.places[id] == null,
+      chipCount,
+      chipTowers,
+      chipPosition: {
+        left: `${50 + Math.cos(radians) * chipXRadius}%`,
+        top: `${50 + Math.sin(radians) * chipYRadius}%`,
+      },
       place: currentTournament.places[id],
       bet: player && currentHand.value ? playerStreetContribution(player, currentHand.value.street) : 0,
       roles,
       folded: player?.folded ?? false,
       allIn: currentHand.value ? isPlayerAllIn(currentTournament, currentHand.value, id) : false,
       position: {
-        left: `${50 + Math.cos(radians) * 43}%`,
-        top: `${50 + Math.sin(radians) * 42}%`,
+        left: `${50 + Math.cos(radians) * 40}%`,
+        top: `${50 + Math.sin(radians) * 38}%`,
       },
     }
   })
 })
-const activePlayers = computed(() => gameRoster.value.filter((player) => player.place == null).length)
+const tableSectors = computed(() => {
+  const count = gameRoster.value.length
+  if (count < 2) return []
+  return Array.from({ length: count }, (_, index) => {
+    const step = 360 / count
+    const boundaryAngle = (step * (index + .5) - 90) * Math.PI / 180
+    const labelAngle = (step * index - 90) * Math.PI / 180
+    return {
+      x: 50 + Math.cos(boundaryAngle) * 47,
+      y: 50 + Math.sin(boundaryAngle) * 47,
+      labelX: 50 + Math.cos(labelAngle + step * .4 * Math.PI / 180) * 35,
+      labelY: 50 + Math.sin(labelAngle + step * .4 * Math.PI / 180) * 35,
+      number: index + 1,
+    }
+  })
+})
+const activePlayers = computed(() => gameRoster.value.filter((player) => tournament.value?.status === 'finished' ? player.place === 1 : player.place == null).length)
 const statusLabel = computed(() => {
   if (tournament.value?.status === 'live') return 'Идёт сейчас'
   if (tournament.value?.status === 'finished') return 'Завершён'
   return 'Скоро начало'
 })
-const tournamentDate = computed(() => tournament.value
-  ? new Intl.DateTimeFormat('ru-RU', {
-      timeZone: 'Asia/Krasnoyarsk',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(new Date(`${tournament.value.date}T12:00:00`))
-  : '')
+const tournamentDate = computed(() => tournament.value ? formatTournamentDate(tournament.value.date, false, true) : '')
 </script>
 
 <template>
   <main v-if="tournament" class="screen-page">
     <header class="screen-top">
-      <RouterLink class="screen-brand" to="/">♠ Friendly Poker</RouterLink>
+      <RouterLink class="screen-brand" to="/"><KitIcon name="rocket" :size="22" />Galaxy Poker</RouterLink>
       <span class="screen-season">СЕЗОН 1</span>
     </header>
 
@@ -108,22 +161,44 @@ const tournamentDate = computed(() => tournament.value
 
         <div class="poker-table" :class="{ 'poker-table-empty': !gameRoster.length }">
           <div class="poker-table-felt" aria-hidden="true">
+            <svg class="table-sector-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <line v-for="(sector, index) in tableSectors" :key="index" x1="50" y1="50" :x2="sector.x" :y2="sector.y" />
+              <g v-for="sector in tableSectors" :key="`number-${sector.number}`" class="table-sector-number">
+                <circle :cx="sector.labelX" :cy="sector.labelY" r="3.8" />
+                <text :x="sector.labelX" :y="sector.labelY">{{ sector.number }}</text>
+              </g>
+            </svg>
             <span class="felt-mark">♠</span>
             <span class="felt-caption">{{ currentHand ? handStreetLabel : 'МЕСТА ЗА СТОЛОМ' }}</span>
+            <span
+              v-for="player in gameRoster"
+              :key="`chips-${player.id}`"
+              class="table-chip-pile"
+              :style="player.chipPosition"
+              role="img"
+              :aria-label="`Стопка ${player.name}: примерно ${player.chipCount} условных фишек, стек ${numberFormat.format(player.stack)}`"
+              :title="`Стек ${numberFormat.format(player.stack)} · высота стопки условная`"
+            >
+              <span v-for="(tower, towerIndex) in player.chipTowers" :key="towerIndex" class="chip-tower" :class="`chip-tower-${towerIndex + 1}`">
+                <img v-for="chip in tower" :key="chip" class="chip-image" :src="pokerChip" alt="" />
+              </span>
+            </span>
           </div>
           <article
             v-for="player in gameRoster"
             :key="player.id"
             class="screen-seat"
-            :class="{ 'is-eliminated': player.place != null, 'is-folded': player.folded, 'is-all-in': player.allIn }"
+            :class="{ 'is-eliminated': player.place != null && player.place > 1, 'is-folded': player.folded, 'is-all-in': player.allIn }"
             :style="player.position"
           >
             <strong class="seat-name">{{ player.name }}</strong>
             <div v-if="player.roles.length" class="seat-roles" :aria-label="player.roles.join(', ')">
-              <span v-for="role in player.roles" :key="role">{{ role }}</span>
+              <span v-for="role in player.roles" :key="role" :class="role === 'Дилер' ? 'role-dealer' : 'role-blind'">{{ role }}</span>
             </div>
-            <span class="seat-stack">{{ player.place != null ? `Место ${player.place}` : tournament.gameInitialized ? `${numberFormat.format(player.stack)} фишек` : 'Ожидает старта' }}</span>
-            <span v-if="tournament.gameInitialized && player.place == null" class="seat-bet">
+            <div class="seat-stackline">
+              <span class="seat-stack">{{ player.stackLabel }}<small v-if="player.showChipUnit" class="seat-stack-unit">фишек</small></span>
+            </div>
+            <span v-if="tournament.gameInitialized && player.place == null" class="seat-bet" :class="{ 'seat-bet-all-in': player.allIn, 'seat-bet-folded': player.folded }">
               <small>{{ player.folded ? 'ФОЛД' : player.allIn ? 'ОЛЛ-ИН' : 'СТАВКА УЛИЦЫ' }}</small>
               <b>{{ numberFormat.format(player.bet) }}</b>
             </span>
@@ -155,9 +230,10 @@ const tournamentDate = computed(() => tournament.value
           <div><span>БОЛЬШОЙ БЛАЙНД</span><strong>{{ numberFormat.format(currentLevel?.big ?? 0) }}</strong></div>
         </div>
 
-        <div class="screen-clock-card">
-          <div class="screen-clock-label">{{ tournament.timerStartedAt === null ? 'ТАЙМЕР НА ПАУЗЕ' : 'ДО СЛЕДУЮЩЕГО УРОВНЯ' }}</div>
+        <div class="screen-clock-card" :class="{ 'clock-expired': expired }">
+          <div class="screen-clock-label">{{ tournament.status === 'finished' ? 'ТУРНИР ЗАВЕРШЁН' : expired ? 'ВРЕМЯ УРОВНЯ ИСТЕКЛО' : tournament.timerStartedAt === null ? 'ТАЙМЕР НА ПАУЗЕ' : 'ДО ОКОНЧАНИЯ УРОВНЯ' }}</div>
           <div class="screen-timer">{{ countdown }}</div>
+          <p v-if="expired" class="screen-expired-hint" role="status">{{ nextLevel ? 'Смена уровня — вручную' : 'Последний уровень · завершение вручную' }}</p>
         </div>
 
         <div class="screen-next-level">
@@ -176,7 +252,7 @@ const tournamentDate = computed(() => tournament.value
         </div>
 
         <div class="screen-tournament-details">
-          <div><span>{{ tournament.gameInitialized ? 'В игре' : 'Участников' }}</span><strong>{{ activePlayers }} / {{ gameRoster.length }}</strong></div>
+          <div><span>{{ tournament.status === 'finished' ? 'Победителей' : tournament.gameInitialized ? 'В игре' : 'Участников' }}</span><strong>{{ activePlayers }} / {{ gameRoster.length }}</strong></div>
           <div><span>Взнос</span><strong>{{ numberFormat.format(tournament.buyIn) }} ₽</strong></div>
           <div><span>Стартовый стек</span><strong>{{ numberFormat.format(tournament.startingStack) }}</strong></div>
         </div>
@@ -192,6 +268,8 @@ const tournamentDate = computed(() => tournament.value
 </template>
 
 <style scoped>
+.clock-expired{border-color:var(--orange-500);background:rgba(255,125,38,.14)}
+.screen-expired-hint{font-size:12px;color:var(--yellow-500);margin:5px 0 0}
 .screen-page {
   width: 100%;
   height: 100vh;
@@ -202,8 +280,11 @@ const tournamentDate = computed(() => tournament.value
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: clamp(10px, 1.8vh, 18px);
-  color: #f5f6f3;
-  background: #102b22;
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 13% 8%, rgba(88, 186, 86, .16), transparent 35%),
+    radial-gradient(ellipse at 92% 95%, rgba(255, 201, 38, .08), transparent 32%),
+    #1f232e;
 }
 
 .screen-top,
@@ -212,7 +293,7 @@ const tournamentDate = computed(() => tournament.value
   justify-content: space-between;
   align-items: center;
   gap: 14px;
-  color: #bac8bf;
+  color: rgba(255,255,255,.72);
 }
 
 .screen-top {
@@ -228,7 +309,7 @@ const tournamentDate = computed(() => tournament.value
 }
 
 .screen-season {
-  color: #c7a960;
+  color: #ddee73;
 }
 
 .screen-dashboard {
@@ -242,9 +323,10 @@ const tournamentDate = computed(() => tournament.value
 .screen-info-panel {
   min-width: 0;
   min-height: 0;
-  border: 1px solid rgba(255, 255, 255, .14);
+  border: 1px solid rgba(221, 238, 115, .2);
   border-radius: 18px;
-  background: rgba(3, 18, 13, .28);
+  background: linear-gradient(145deg, rgba(65, 72, 89, .92), rgba(37, 42, 55, .96));
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .2);
 }
 
 .screen-table-panel {
@@ -262,7 +344,7 @@ const tournamentDate = computed(() => tournament.value
 
 .screen-table-heading .eyebrow,
 .screen-info-heading .eyebrow {
-  color: #c7a960;
+  color: #ddee73;
   font-size: 12px;
 }
 
@@ -290,7 +372,7 @@ const tournamentDate = computed(() => tournament.value
 }
 
 .table-pot strong {
-  color: #ebc86e;
+  color: #ffc926;
   font-size: clamp(24px, 2.8vw, 38px);
   font-variant-numeric: tabular-nums;
 }
@@ -303,26 +385,69 @@ const tournamentDate = computed(() => tournament.value
 }
 
 .poker-table-felt {
+  overflow: hidden;
   position: absolute;
+  z-index: 0;
   inset: 17% 14%;
   display: grid;
   place-content: center;
   justify-items: center;
   gap: 8px;
-  border: 2px solid rgba(213, 170, 84, .72);
+  border: 3px solid #ffc926;
   border-radius: 50%;
-  background: radial-gradient(ellipse at center, #1b5942 0%, #154532 65%, #103728 100%);
-  box-shadow: inset 0 0 0 7px rgba(213, 170, 84, .08), 0 12px 32px rgba(0, 0, 0, .2);
+  background:
+    radial-gradient(circle, rgba(255,255,255,.07) 0 1px, transparent 1.5px) 0 0 / 20px 20px,
+    radial-gradient(ellipse at 50% 42%, #2f9d62 0%, #187349 48%, #0c583d 100%);
+  box-shadow: inset 0 0 0 8px rgba(221, 238, 115, .12), inset 0 0 45px rgba(0, 0, 0, .24), 0 12px 32px rgba(0, 0, 0, .28);
+}
+
+.table-sector-lines {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.table-sector-lines line {
+  stroke: rgba(255, 255, 255, .24);
+  stroke-width: .32;
+  vector-effect: non-scaling-stroke;
+}
+
+.table-sector-number circle {
+  fill:#0c583d;
+  stroke:#ffc926;
+  stroke-width:.55;
+  vector-effect:non-scaling-stroke;
+}
+
+.table-sector-number text {
+  fill:#fff;
+  stroke:#0c583d;
+  stroke-width:.8px;
+  paint-order:stroke;
+  font-size:4.5px;
+  font-weight:800;
+  text-anchor:middle;
+  dominant-baseline:central;
 }
 
 .felt-mark {
-  color: rgba(237, 211, 145, .25);
-  font-size: clamp(58px, 8vw, 120px);
+  position: relative;
+  z-index: 1;
+  top:-18px;
+  color: rgba(255, 201, 38, .34);
+  font-size: clamp(44px, 6vw, 74px);
   line-height: .9;
 }
 
 .felt-caption {
-  color: rgba(244, 231, 196, .75);
+  position: relative;
+  z-index: 1;
+  top:-18px;
+  color: rgba(255, 255, 255, .72);
   font-size: clamp(12px, 1.15vw, 16px);
   font-weight: 700;
   letter-spacing: .16em;
@@ -331,19 +456,19 @@ const tournamentDate = computed(() => tournament.value
 
 .screen-seat {
   position: absolute;
-  z-index: 1;
+  z-index: 2;
   width: clamp(118px, 14vw, 180px);
-  min-height: 92px;
-  padding: 9px 10px 8px;
+  min-height: 112px;
+  padding: 10px 11px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(220, 190, 116, .44);
-  border-radius: 9px;
-  background: #172e25;
-  box-shadow: 0 5px 14px rgba(0, 0, 0, .25);
+  border: 1px solid rgba(255, 201, 38, .68);
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(31, 35, 46, .98), rgba(25, 28, 36, .98));
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .44), inset 0 1px 0 rgba(255,255,255,.12);
   text-align: center;
 }
 
@@ -358,15 +483,16 @@ const tournamentDate = computed(() => tournament.value
 }
 
 .screen-seat.is-all-in {
-  border-color: #d86b61;
-  box-shadow: 0 0 0 2px rgba(216, 107, 97, .22), 0 5px 14px rgba(0, 0, 0, .25);
+  border-color: #ff7866;
+  box-shadow: 0 0 0 2px rgba(255, 120, 102, .22), 0 5px 14px rgba(0, 0, 0, .25);
 }
 
 .seat-name {
   max-width: 100%;
   overflow: hidden;
   color: #fff;
-  font-size: clamp(14px, 1.25vw, 18px);
+  font-size: clamp(17px, 1.45vw, 21px);
+  font-weight: 700;
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -379,47 +505,104 @@ const tournamentDate = computed(() => tournament.value
 }
 
 .seat-roles span {
-  padding: 2px 5px;
+  padding: 3px 7px;
   border-radius: 4px;
-  background: #d4b967;
-  color: #2a2110;
-  font-size: 10px;
+  background: #ddee73;
+  color: #191c24;
+  font-size: 12px;
   font-weight: 800;
 }
 
+.seat-roles .role-dealer { background:var(--yellow-500); }
+.seat-roles .role-blind { background:var(--lime-500); }
+
+.seat-stackline {
+  display:flex;
+  width:100%;
+  min-width:0;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
 .seat-stack {
+  display:flex;
+  align-items:baseline;
+  gap:3px;
   max-width: 100%;
   overflow: hidden;
-  color: #b8c7bd;
-  font-size: 12px;
+  color: rgba(255,255,255,.86);
+  font-size: 14px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.seat-stack-unit { color:var(--text-muted); font-size:11px; font-weight:500; }
+
+.table-chip-pile {
+  position:absolute;
+  z-index:1;
+  display:flex;
+  align-items:flex-end;
+  gap:3px;
+  transform:translate(-50%,-50%);
+  filter:drop-shadow(0 3px 2px rgba(0,0,0,.42));
+}
+
+.chip-tower {
+  display:flex;
+  flex-direction:column-reverse;
+  align-items:center;
+}
+
+.chip-image {
+  display:block;
+  flex:0 0 auto;
+  width:28px;
+  height:28px;
+  margin-top:-19px;
+  object-fit:contain;
+  transform:perspective(90px) rotateX(62deg);
+  transform-origin:center center;
+  filter:brightness(0) saturate(100%) invert(71%) sepia(53%) saturate(590%) hue-rotate(65deg) brightness(95%) contrast(90%);
+}
+
+.chip-tower-1 .chip-image { filter:brightness(0) saturate(100%) invert(71%) sepia(53%) saturate(590%) hue-rotate(65deg) brightness(95%) contrast(90%); }
+.chip-tower-2 .chip-image { filter:brightness(0) saturate(100%) invert(81%) sepia(79%) saturate(850%) hue-rotate(351deg) brightness(104%) contrast(101%); }
+.chip-tower-3 .chip-image { filter:brightness(0) saturate(100%) invert(66%) sepia(48%) saturate(1700%) hue-rotate(318deg) brightness(99%) contrast(94%); }
 
 .seat-bet {
   display: flex;
   align-items: baseline;
   gap: 5px;
-  color: #f1d07a;
+  width:100%;
+  justify-content:space-between;
+  padding-top:4px;
+  border-top:1px solid rgba(255,255,255,.12);
+  color: #ffc926;
   font-variant-numeric: tabular-nums;
 }
 
+.seat-bet-all-in { color:var(--salmon-500); }
+.seat-bet-folded { color:var(--text-muted); }
+
 .seat-bet small {
   color: #acbdb2;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: .05em;
 }
 
 .seat-bet b {
-  font-size: 17px;
+  font-size: 19px;
 }
 
 .table-empty {
   position: absolute;
   inset: 50% auto auto 50%;
   transform: translate(-50%, -50%);
-  color: #f2d487;
+  color: #ffc926;
   font-size: 16px;
   text-align: center;
 }
@@ -434,7 +617,7 @@ const tournamentDate = computed(() => tournament.value
 }
 
 .screen-table-legend b {
-  color: #e4c875;
+  color: #ffc926;
 }
 
 .legend-bet {
@@ -459,15 +642,15 @@ const tournamentDate = computed(() => tournament.value
   padding: 6px 10px;
   border-radius: 99px;
   background: rgba(255, 255, 255, .09);
-  color: #d7dfd9;
+  color: rgba(255,255,255,.82);
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .screen-status.status-live {
-  background: rgba(213, 170, 84, .18);
-  color: #f0d586;
+  background: rgba(255, 201, 38, .14);
+  color: #ffc926;
 }
 
 .screen-status.status-finished {
@@ -501,7 +684,7 @@ const tournamentDate = computed(() => tournament.value
 }
 
 .screen-blinds strong {
-  color: #ebc86e;
+  color: #ffc926;
   font-size: clamp(38px, 4.6vw, 68px);
   font-weight: 600;
   line-height: 1;
@@ -516,9 +699,9 @@ const tournamentDate = computed(() => tournament.value
 
 .screen-clock-card {
   padding: clamp(10px, 1.6vh, 16px);
-  border: 1px solid rgba(255, 255, 255, .12);
+  border: 1px solid rgba(221, 238, 115, .32);
   border-radius: 12px;
-  background: rgba(0, 0, 0, .14);
+  background: linear-gradient(145deg, rgba(221, 238, 115, .1), rgba(37, 42, 55, .78));
   text-align: center;
 }
 
@@ -531,13 +714,16 @@ const tournamentDate = computed(() => tournament.value
 
 .screen-timer {
   margin-top: 2px;
-  color: #fff;
+  color: #ddee73;
   font-size: clamp(60px, 7.8vw, 104px);
   font-weight: 500;
   letter-spacing: .02em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 24px rgba(221, 238, 115, .18);
 }
+
+.clock-expired .screen-timer { color: #ff7d26; text-shadow: 0 0 24px rgba(255,125,38,.22); }
 
 .screen-next-level {
   display: grid;
@@ -549,7 +735,7 @@ const tournamentDate = computed(() => tournament.value
 }
 
 .screen-next-level strong {
-  color: #f0d586;
+  color: #ffc926;
   font-size: 19px;
   font-variant-numeric: tabular-nums;
 }
@@ -609,7 +795,7 @@ const tournamentDate = computed(() => tournament.value
 }
 
 .screen-tournament-details strong {
-  color: #f2d487;
+  color: #ffc926;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
@@ -623,7 +809,7 @@ const tournamentDate = computed(() => tournament.value
 
 .screen-missing {
   min-height: 100vh;
-  background: #f5f6f3;
+  background: #353c4d;
 }
 
 @media (max-width: 900px) {
@@ -679,19 +865,24 @@ const tournamentDate = computed(() => tournament.value
   }
 
   .seat-name {
-    font-size: 10px;
+    font-size: 13px;
   }
 
   .seat-stack {
+    font-size: 12px;
+  }
+
+  .seat-stackline { gap:2px; }
+  .seat-stack-unit { display:none; }
+  .table-chip-pile { gap:2px; transform:translate(-50%,-50%) scale(.52); }
+  .chip-image { width:22px; height:22px; margin-top:-15px; }
+
+  .seat-bet small {
     font-size: 8px;
   }
 
-  .seat-bet small {
-    font-size: 6px;
-  }
-
   .seat-bet b {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .screen-table-legend {

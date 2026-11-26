@@ -1,3 +1,95 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
-:root{font-family:'DM Sans',Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1d2823;background:#f5f6f3;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;--green:#14382d;--green-light:#e6eee8;--gold:#d5aa54;--red:#c94a3c;--muted:#737e77;--line:#e2e6e1;--paper:#fff}
-*,*::before,*::after{box-sizing:border-box}body{margin:0;min-width:320px;min-height:100vh}button,input{font:inherit}button{cursor:pointer}a{color:inherit}#app{min-height:100vh}
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap');
+
+:root {
+  color-scheme: dark;
+  font-family: Roboto, Arial, sans-serif;
+  color: var(--text-primary);
+  background: var(--body-default);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
+  --grey-900: #191c24;
+  --grey-800: #1f232e;
+  --grey-700: #252a37;
+  --grey-600: #303645;
+  --grey-500: #353c4d;
+  --grey-400: #414859;
+  --grey-300: #555c6d;
+  --grey-200: #666d7f;
+  --grey-100: #868d9c;
+
+  --green-500: #58ba56;
+  --salmon-500: #ff7866;
+  --yellow-500: #ffc926;
+  --orange-500: #ff7d26;
+  --lime-500: #ddee73;
+  --crimson-pink-500: #eb2346;
+
+  --body-default: var(--grey-500);
+  --body-light: var(--grey-400);
+  --body-dark: var(--grey-600);
+  --surface-default: #414859;
+  --surface-hover: #4b5365;
+  --surface-disabled: #303645;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, .72);
+  --text-muted: rgba(255, 255, 255, .54);
+  --line: rgba(255, 255, 255, .14);
+  --accent: var(--lime-500);
+
+  /* Keep existing component tokens mapped to the Galaxy palette. */
+  --green: var(--lime-500);
+  --green-light: rgba(221, 238, 115, .12);
+  --gold: var(--yellow-500);
+  --red: var(--salmon-500);
+  --muted: var(--text-muted);
+  --paper: var(--surface-default);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--body-default);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  color: var(--grey-900);
+  background: var(--lime-500);
+}
+
+:focus-visible {
+  outline: 2px solid var(--lime-500);
+  outline-offset: 2px;
+}

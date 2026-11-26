@@ -46,10 +46,11 @@ export function createPokerHand(number: number, playerIds: string[], roles: Hand
       takesPot: false,
     }
   }
-  return { number, street: 'preflop', players, settled: false, roles }
+  return { number, street: 'preflop', players, settled: false, roles, startedAt: Date.now(), events: [] }
 }
 
 export function postBlinds(hand: PokerHand, level: BlindLevel, stacks: Record<string, number>): void {
+  hand.bigBlind = level.big
   if (!hand.roles) return
   const smallBlindPlayer = hand.players[hand.roles.smallBlind]
   const bigBlindPlayer = hand.players[hand.roles.bigBlind]
@@ -107,8 +108,8 @@ export function canPlayerCheck(hand: PokerHand, playerId: string, street: HandSt
   let highestBefore = Math.max(0, ...Object.values(hand.players).map((other) =>
     (other.bets[street] ?? []).slice(0, actionIndex).reduce((sum, amount) => sum + (Number(amount) || 0), 0),
   ))
-  if (street === 'preflop' && actionIndex === 0) {
-    highestBefore = Math.max(highestBefore, Number(hand.players[hand.roles?.bigBlind ?? '']?.bets.preflop[0] ?? 0))
+  if (street === 'preflop') {
+    highestBefore = Math.max(highestBefore, hand.bigBlind ?? Number(hand.players[hand.roles?.bigBlind ?? '']?.bets.preflop[0] ?? 0))
   }
   const playerPosition = order.indexOf(playerId)
   for (const id of order.slice(0, playerPosition)) {
@@ -133,8 +134,8 @@ export function classifyHandActions(hand: PokerHand, street: HandStreet): void {
     const ownBefore = new Map(actionOrder.map((id) => [id, (hand.players[id]!.bets[street] ?? [])
       .slice(0, actionIndex).reduce((sum, amount) => sum + (Number(amount) || 0), 0)]))
     let highestBet = Math.max(0, ...ownBefore.values())
-    if (street === 'preflop' && actionIndex === 0) {
-      highestBet = Math.max(highestBet, Number(hand.players[hand.roles?.bigBlind ?? '']?.bets.preflop[0] ?? 0))
+    if (street === 'preflop') {
+      highestBet = Math.max(highestBet, hand.bigBlind ?? Number(hand.players[hand.roles?.bigBlind ?? '']?.bets.preflop[0] ?? 0))
     }
 
     for (const id of actionOrder) {
@@ -184,7 +185,8 @@ export function streetActionRequirements(tournament: Tournament, hand: PokerHand
   const contenders = Object.entries(hand.players).filter(([, player]) => !player.folded)
   if (contenders.length <= 1) return []
 
-  const highestContribution = Math.max(0, ...contenders.map(([, player]) => playerStreetContribution(player, street)))
+  const canStillBet = contenders.filter(([id]) => !isPlayerAllIn(tournament, hand, id)).length
+  const highestContribution = Math.max(street === 'preflop' && canStillBet > 1 ? (hand.bigBlind ?? 0) : 0, ...contenders.map(([, player]) => playerStreetContribution(player, street)))
   return contenders.flatMap(([playerId, player]) => {
     if (isPlayerAllIn(tournament, hand, playerId)) return []
 
@@ -195,6 +197,8 @@ export function streetActionRequirements(tournament: Tournament, hand: PokerHand
       return !isAutomaticBlind && (Number(player.bets[street]?.[index]) || 0) > 0
     }) ?? false
     const contribution = playerStreetContribution(player, street)
+    // Once everyone else is all-in, no check is required on a new street.
+    if (canStillBet <= 1 && contribution >= highestContribution) return []
     if (hasVoluntaryAction && contribution >= highestContribution) return []
     return [{ playerId, amountOwed: Math.max(0, highestContribution - contribution) }]
   })
@@ -204,27 +208,82 @@ export function canAdvanceHandStreet(tournament: Tournament, hand: PokerHand, st
   return streetActionRequirements(tournament, hand, street).length === 0
 }
 
-export function settlePokerHand(tournament: Tournament, hand: PokerHand): boolean {
-  if (hand.settled) return false
-  const pot = handPot(hand)
-  const winners = Object.entries(hand.players)
-    .filter(([, player]) => player.takesPot && !player.folded)
-    .map(([playerId]) => playerId)
-  if (pot > 0 && winners.length === 0) return false
-  if (Object.entries(hand.players).some(([playerId, player]) => playerHandContribution(player) > (tournament.stacks[playerId] ?? 0))) return false
+export interface HandPot {
+  id: string
+  amount: number
+  eligibleIds: string[]
+  winnerIds: string[]
+}
 
-  for (const [playerId, player] of Object.entries(hand.players)) {
-    tournament.stacks[playerId] = (tournament.stacks[playerId] ?? 0) - playerHandContribution(player)
+export interface HandDistribution {
+  pots: HandPot[]
+  awards: Record<string, number>
+  refunds: Record<string, number>
+  ready: boolean
+}
+
+/** Separate matched contributions into pots. A lone contribution is a refund, never a prize. */
+export function handDistribution(hand: PokerHand): HandDistribution {
+  const entries = Object.entries(hand.players)
+  const contributions = new Map(entries.map(([id, player]) => [id, playerHandContribution(player)]))
+  const thresholds = [...new Set(contributions.values())].filter((amount) => amount > 0).sort((a, b) => a - b)
+  const contenders = entries.filter(([, player]) => !player.folded).map(([id]) => id)
+  const awards: Record<string, number> = {}
+  const refunds: Record<string, number> = {}
+  const pots: HandPot[] = []
+  let previous = 0
+  let ready = contenders.length > 0
+  const seats = Object.keys(hand.players)
+  const dealerIndex = seats.indexOf(hand.roles?.dealer ?? '')
+  const awardOrder = [...seats.slice(dealerIndex + 1), ...seats.slice(0, dealerIndex + 1)]
+  for (const threshold of thresholds) {
+    const contributors = entries.filter(([id]) => contributions.get(id)! >= threshold).map(([id]) => id)
+    const amount = (threshold - previous) * contributors.length
+    previous = threshold
+    if (contributors.length === 1) {
+      refunds[contributors[0]!] = (refunds[contributors[0]!] ?? 0) + amount
+      continue
+    }
+    const eligibleIds = contenders.length === 1 ? contenders : contributors.filter((id) => contenders.includes(id))
+    const previousPot = pots.at(-1)
+    if (previousPot && previousPot.eligibleIds.join('|') === eligibleIds.join('|')) {
+      previousPot.amount += amount
+      previousPot.id = String(threshold)
+    } else pots.push({ id: String(threshold), amount, eligibleIds, winnerIds: [] })
   }
-
-  if (winners.length) {
-    const share = Math.floor(pot / winners.length)
-    const remainder = pot % winners.length
-    winners.forEach((playerId, index) => {
-      tournament.stacks[playerId] = (tournament.stacks[playerId] ?? 0) + share + (index < remainder ? 1 : 0)
+  for (const pot of pots) {
+    const { id, amount, eligibleIds } = pot
+    const selected = hand.potWinners?.[id] ?? (pots.length === 1 ? eligibleIds.filter((playerId) => hand.players[playerId]!.takesPot) : [])
+    const winnerIds = eligibleIds.length === 1 ? [...eligibleIds] : awardOrder.filter((playerId) => eligibleIds.includes(playerId) && selected.includes(playerId))
+    if (!winnerIds.length || selected.some((playerId) => !eligibleIds.includes(playerId))) ready = false
+    pot.winnerIds = winnerIds
+    winnerIds.forEach((playerId, index) => {
+      awards[playerId] = (awards[playerId] ?? 0) + Math.floor(amount / winnerIds.length) + (index < amount % winnerIds.length ? 1 : 0)
     })
   }
+  return { pots, awards, refunds, ready }
+}
+
+export function canSettlePokerHand(tournament: Tournament, hand: PokerHand): boolean {
+  if (hand.settled) return false
+  if (Object.entries(hand.players).some(([id, player]) =>
+    !Number.isSafeInteger(tournament.stacks[id]) || (tournament.stacks[id] ?? -1) < 0
+    || Object.values(player.bets).flat().some((amount) => !Number.isSafeInteger(amount) || amount < 0)
+    || playerHandContribution(player) > (tournament.stacks[id] ?? 0),
+  )) return false
+  return handDistribution(hand).ready
+}
+
+export function settlePokerHand(tournament: Tournament, hand: PokerHand): boolean {
+  if (!canSettlePokerHand(tournament, hand)) return false
+  const { awards, refunds } = handDistribution(hand)
+  for (const [id, player] of Object.entries(hand.players)) {
+    tournament.stacks[id] = (tournament.stacks[id] ?? 0) - playerHandContribution(player) + (awards[id] ?? 0) + (refunds[id] ?? 0)
+    player.takesPot = (awards[id] ?? 0) > 0
+  }
+  hand.settlement = { awards, refunds }
   hand.settled = true
+  hand.endedAt = Date.now()
   return true
 }
 

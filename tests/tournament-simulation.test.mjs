@@ -153,6 +153,7 @@ test('runs a seeded six-player tournament and restores every hand from local and
           }
           if (foldedCount === activeIds.length) store.setHandFolded(tournament, activeIds[0], false)
           if (foldedCount === 0) store.setHandFolded(tournament, activeIds.at(-1), true)
+          store.setHandFolded(tournament, playerIds[0], false)
         }
 
         for (let actionIndex = 0; actionIndex < 3; actionIndex += 1) {
@@ -169,13 +170,16 @@ test('runs a seeded six-player tournament and restores every hand from local and
 
       const contenders = activeIds.filter((playerId) => !hand.players[playerId].folded)
       assert.ok(contenders.length > 0)
-      const firstWinner = contenders[Math.floor(random() * contenders.length)]
+      const firstWinner = contenders.includes(playerIds[0]) ? playerIds[0] : contenders[Math.floor(random() * contenders.length)]
       store.setHandWinner(tournament, firstWinner, true)
       if (contenders.length > 1 && random() < 0.2) {
         const secondWinner = contenders.find((playerId) => playerId !== firstWinner)
         store.setHandWinner(tournament, secondWinner, true)
       }
       const chipsBeforeSettlement = totalChips(tournament)
+      for (const pot of gameMath.handDistribution(hand).pots) {
+        if (!pot.winnerIds.length) store.setHandPotWinner(tournament, pot.id, pot.eligibleIds[0], true)
+      }
       assert.equal(gameMath.settlePokerHand(tournament, hand), true)
       assert.equal(hand.settled, true)
       assert.equal(totalChips(tournament), chipsBeforeSettlement, 'settling a hand must conserve chips')
@@ -195,11 +199,17 @@ test('runs a seeded six-player tournament and restores every hand from local and
       const hand = store.getCurrentHand(tournament)
       assert.ok(hand)
       hand.street = 'preflop'
+      assert.ok(tournament.stacks[winnerId] >= tournament.stacks[loserId], 'the covering player must match the knockout stake')
+      const knockoutStake = tournament.stacks[loserId]
       for (const playerId of Object.keys(hand.players)) {
+        if (![loserId, winnerId].includes(playerId)) {
+          store.setHandFolded(tournament, playerId, true)
+          continue
+        }
         const stack = tournament.stacks[playerId]
         const alreadyBet = gameMath.playerHandContribution(hand.players[playerId])
         const available = Math.max(0, stack - alreadyBet)
-        const amount = playerId === loserId ? available : Math.min(available, 10 + Math.floor(random() * 31))
+        const amount = playerId === loserId ? available : Math.max(0, knockoutStake - alreadyBet)
         assert.equal(store.setHandBet(tournament, playerId, 'preflop', 1, amount), true)
       }
       store.setHandWinner(tournament, winnerId, true)
@@ -287,7 +297,7 @@ test('runs a seeded six-player tournament and restores every hand from local and
     } }).getContent())
     assert.deepEqual(writeResponse, { ok: true, revision: 1 }, 'Apps Script write should accept the full state and increment its revision')
     const readResponse = JSON.parse(scripts.doGet({ parameter: { action: 'read' } }).getContent())
-    assert.equal(readResponse.apiVersion, 5)
+    assert.equal(readResponse.apiVersion, 6)
     assert.equal(readResponse.revision, 1)
     assert.deepEqual(JSON.parse(JSON.stringify(readResponse.state)), savedBrowserState, 'Google Sheets read should restore every player, hand and tournament field')
     const handRowCount = tournament.hands.reduce((total, hand) => total + Object.keys(hand.players).length, 0)

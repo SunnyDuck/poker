@@ -1,8 +1,9 @@
 import { reactive, ref, watch } from 'vue'
-import { createDemoState } from '@/domain/demoData'
-import type { DemoState, HandStreet, PokerActionType, Tournament } from '@/domain/types'
-import { canPlayerCheck, createPokerHand, defaultBetActionCount, playerHandContribution, postBlinds, rolesForHand, settlePokerHand, streetActionRequirements } from '@/domain/game'
-import { isBeforeKrasnoyarskCutoff } from '@/domain/time'
+import { createDemoState, seasonLevels } from '@/domain/demoData'
+import type { DemoState, HandStreet, PokerActionType, PokerHand, Tournament, TournamentCheckpoint } from '@/domain/types'
+import { canPlayerCheck, classifyHandActions, createPokerHand, defaultBetActionCount, handDistribution, playerHandContribution, postBlinds, projectedStack, rolesForHand, settlePokerHand, streetActionRequirements } from '@/domain/game'
+import { isBeforeKrasnoyarskCutoff, krasnoyarskToday } from '@/domain/time'
+import { tournamentSettingsErrors } from '@/domain/validation'
 import {
   getGoogleAdminKey,
   isGoogleAdminKeyRemembered,
@@ -17,8 +18,8 @@ const retainedHistoryKey = 'friendly-poker-history-awaiting-sync'
 const pendingSaveKey = 'friendly-poker-pending-save'
 const pollingIntervalMs = 30_000
 const saveDelayMs = 500
-const requiredGoogleApiVersion = 5
-const outdatedGoogleScriptMessage = 'Обновите Code.gs и разверните новую версию Apps Script: текущая версия не сохраняет типы действий в истории раздач.'
+const requiredGoogleApiVersion = 6
+const outdatedGoogleScriptMessage = 'Обновите Code.gs и разверните новую версию Apps Script: для сохранения банков, точного таймера и отмены операций требуется API 6.'
 
 export type GoogleSyncStatus = 'local' | 'connecting' | 'read-only' | 'connected' | 'saving' | 'error' | 'conflict'
 
@@ -62,14 +63,15 @@ function normalizeState(value: DemoState): DemoState {
     tournament.stacks ??= {}
     tournament.hands ??= []
     tournament.gameInitialized ??= Object.keys(tournament.stacks).length > 0
-    if (tournament.startedAt != null && Number.isFinite(tournament.startedAt)) {
-      tournament.startedAt = Math.floor(tournament.startedAt / 1000) * 1000
-    }
     tournament.hands.forEach((hand) => {
       hand.players ??= {}
       hand.street ??= 'preflop'
       hand.settled ??= false
       hand.roles ??= null
+      if (hand.bigBlind == null && !hand.settled) {
+        const level = tournament.levels.slice(0, tournament.currentLevel + 1).reverse().find((item) => !item.break)
+        hand.bigBlind = level?.big ?? 0
+      }
       for (const player of Object.values(hand.players)) {
         player.bets ??= { preflop: [], flop: [], turn: [], river: [] }
         player.actions ??= { preflop: [], flop: [], turn: [], river: [] }
@@ -516,9 +518,9 @@ export function findTournament(id: string): Tournament | undefined {
 export function createTournament(): Tournament {
   const number = state.tournaments.length + 1
   const tournament: Tournament = {
-    id: `tournament-${Date.now()}`,
+    id: `tournament-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     title: `Игра ${number}`,
-    date: '2026-12-25',
+    date: krasnoyarskToday(),
     startTime: '18:00',
     status: 'upcoming',
     buyIn: 300,
@@ -534,9 +536,9 @@ export function createTournament(): Tournament {
     gameInitialized: false,
     stacks: {},
     hands: [],
-    levels: [{ small: 25, big: 50, minutes: 30 }],
+    levels: seasonLevels.map((level) => ({ ...level })),
     currentLevel: 0,
-    secondsRemaining: 1800,
+    secondsRemaining: seasonLevels[0]!.minutes * 60,
     timerStartedAt: null,
     startedAt: null,
   }
@@ -554,6 +556,7 @@ export function toggleParticipant(tournament: Tournament, playerId: string): voi
 }
 
 export function removeParticipantFromTournament(tournament: Tournament, playerId: string): void {
+  if (tournament.gameInitialized || tournament.status !== 'upcoming' || tournament.hands.length) return
   if (!tournament.participantIds.includes(playerId)) return
 
   tournament.participantIds = tournament.participantIds.filter((id) => id !== playerId)
@@ -605,14 +608,21 @@ export function addPlayer(name: string): DemoState['players'][number] | undefine
   return player
 }
 
-export function removePlayerFromSeason(playerId: string): void {
+export function playerHasHistory(playerId: string): boolean {
+  return state.tournaments.some((tournament) => tournament.participantIds.includes(playerId)
+    && (tournament.gameInitialized || tournament.status !== 'upcoming' || tournament.hands.length > 0))
+}
+
+export function removePlayerFromSeason(playerId: string): boolean {
+  if (playerHasHistory(playerId)) return false
   const playerIndex = state.players.findIndex((player) => player.id === playerId)
-  if (playerIndex < 0) return
+  if (playerIndex < 0) return false
 
   state.players.splice(playerIndex, 1)
   for (const tournament of state.tournaments) {
     removeParticipantFromTournament(tournament, playerId)
   }
+  return true
 }
 
 export function getCurrentHand(tournament: Tournament) {
@@ -626,36 +636,46 @@ export function resetDemo(): void {
   state.tournaments.splice(0, state.tournaments.length, ...fresh.tournaments)
 }
 
-export function currentSeconds(tournament: Tournament): number {
-  if (tournament.timerStartedAt === null) return tournament.secondsRemaining
-  const elapsed = Math.floor((Date.now() - tournament.timerStartedAt) / 1000)
-  return Math.max(0, tournament.secondsRemaining - elapsed)
+export function remainingMilliseconds(tournament: Tournament, now = Date.now()): number {
+  const remaining = Number.isFinite(tournament.secondsRemaining) ? Math.max(0, Math.round(tournament.secondsRemaining * 1000)) : 0
+  const elapsed = tournament.timerStartedAt === null ? 0 : Math.max(0, now - tournament.timerStartedAt)
+  return Math.max(0, remaining - elapsed)
 }
 
-export function startTimer(tournament: Tournament): void {
-  if (tournament.status === 'finished' || tournament.participantIds.length < 2) return
-  if (!tournament.gameInitialized && !tournament.participantIds.includes(tournament.initialDealerId ?? '')) return
+export function currentSeconds(tournament: Tournament): number {
+  return Math.ceil(remainingMilliseconds(tournament) / 1000)
+}
+
+export function startTimer(tournament: Tournament): boolean {
+  if (tournament.status === 'finished' || tournament.participantIds.length < 2) return false
+  if (!tournament.gameInitialized && (tournamentSettingsErrors(tournament).length > 0
+    || tournament.participantIds.some((id) => !state.players.some((player) => player.id === id)))) return false
   if (!tournament.gameInitialized) {
     tournament.stacks = {}
     tournament.rebuys = {}
     tournament.places = {}
     tournament.eliminatedInHand = {}
     tournament.hands = []
+    tournament.operationHistory = []
+    tournament.currentLevel = 0
+    tournament.secondsRemaining = tournament.levels[0]!.minutes * 60
     for (const playerId of tournament.participantIds) {
       tournament.stacks[playerId] = tournament.startingStack
       tournament.rebuys[playerId] = 0
     }
     tournament.gameInitialized = true
   }
-  if (tournament.timerStartedAt !== null) return
-  const startedAt = Math.floor(Date.now() / 1000) * 1000
+  if (tournament.timerStartedAt !== null) return true
+  if (remainingMilliseconds(tournament) === 0) return false
+  const startedAt = Date.now()
   if (tournament.startedAt == null) tournament.startedAt = startedAt
   tournament.timerStartedAt = startedAt
   tournament.status = 'live'
+  return true
 }
 
 export function startNextHand(tournament: Tournament): boolean {
-  if (tournament.status !== 'live' || !tournament.gameInitialized || getCurrentHand(tournament)) return false
+  if (tournament.status !== 'live' || !tournament.gameInitialized || getCurrentHand(tournament) || tournament.levels[tournament.currentLevel]?.break) return false
   const unresolvedElimination = tournament.participantIds.some((id) =>
     tournament.places[id] == null && (tournament.stacks[id] ?? 0) === 0,
   )
@@ -689,6 +709,7 @@ export function setHandStreet(tournament: Tournament, street: HandStreet): boole
       if (streetActionRequirements(tournament, hand, currentStreet).length > 0) return false
     }
   }
+  if (hand.street !== street) recordHandEvent(hand, `Открыта улица: ${street}`)
   hand.street = street
   return true
 }
@@ -698,12 +719,24 @@ export function setHandBet(tournament: Tournament, playerId: string, street: Han
   const player = hand?.players[playerId]
   if (!hand || !player || player.folded || !Number.isInteger(actionIndex) || actionIndex < 0 || actionIndex >= player.bets[street].length || !Number.isFinite(amount)) return false
 
-  const normalizedAmount = Math.max(0, Math.floor(amount))
+  if (street !== hand.street || !Number.isSafeInteger(amount) || amount < 0) return false
+  const normalizedAmount = amount
   const previousAmount = player.bets[street][actionIndex] ?? 0
+  if (street === 'preflop' && actionIndex === 0 && [hand.roles?.smallBlind, hand.roles?.bigBlind].includes(playerId) && normalizedAmount !== previousAmount) return false
   const contributionWithoutAction = playerHandContribution(player) - previousAmount
   if (contributionWithoutAction + normalizedAmount > (tournament.stacks[playerId] ?? 0)) return false
 
   player.bets[street][actionIndex] = normalizedAmount
+  if (previousAmount !== normalizedAmount) {
+    delete hand.potWinners
+    classifyHandActions(hand, street)
+    if (projectedStack(tournament, hand, playerId) === 0 && normalizedAmount > 0) player.actions[street][actionIndex] = 'all-in'
+    else if (player.actions[street][actionIndex] === 'all-in') {
+      player.actions[street][actionIndex] = null
+      classifyHandActions(hand, street)
+    }
+    recordHandEvent(hand, `${playerName(playerId)}: ${street}, действие ${actionIndex + 1}, добавлено ${normalizedAmount} (было ${previousAmount})`)
+  }
   return true
 }
 
@@ -716,6 +749,7 @@ export function setHandAction(tournament: Tournament, playerId: string, street: 
     playerId === hand.roles?.smallBlind || playerId === hand.roles?.bigBlind
   )
   if (automaticBlind && action !== player.actions[street][actionIndex]) return false
+  if (player.actions[street][actionIndex] !== action && action === 'check') recordHandEvent(hand, `${playerName(playerId)}: чек, ${street}, действие ${actionIndex + 1}`)
   player.actions[street][actionIndex] = action
   return true
 }
@@ -730,13 +764,16 @@ export function addHandBetActionColumn(tournament: Tournament, street: HandStree
   return true
 }
 
-export function setHandFolded(tournament: Tournament, playerId: string, folded: boolean): void {
+export function setHandFolded(tournament: Tournament, playerId: string, folded: boolean): boolean {
   const hand = getCurrentHand(tournament)
   const player = hand?.players[playerId]
-  if (!hand || !player) return
+  if (!hand || !player) return false
+  if (folded && !Object.entries(hand.players).some(([id, other]) => id !== playerId && !other.folded)) return false
 
   player.folded = folded
   player.foldedOn = folded ? hand.street : null
+  delete hand.potWinners
+  recordHandEvent(hand, `${playerName(playerId)}: ${folded ? 'фолд' : 'отмена фолда'}, ${hand.street}`)
   if (folded) {
     player.takesPot = false
     const currentStreetIndex = ['preflop', 'flop', 'turn', 'river'].indexOf(hand.street)
@@ -745,6 +782,7 @@ export function setHandFolded(tournament: Tournament, playerId: string, folded: 
       player.actions[street].fill(null)
     }
   }
+  return true
 }
 
 export function setHandWinner(tournament: Tournament, playerId: string, takesPot: boolean): void {
@@ -752,15 +790,40 @@ export function setHandWinner(tournament: Tournament, playerId: string, takesPot
   const player = hand?.players[playerId]
   if (!hand || !player || player.folded) return
   player.takesPot = takesPot
+  delete hand.potWinners
+}
+
+export function setHandPotWinner(tournament: Tournament, potId: string, playerId: string, selected: boolean): boolean {
+  const hand = getCurrentHand(tournament)
+  if (!hand) return false
+  const pot = handDistribution(hand).pots.find((item) => item.id === potId)
+  if (!pot || !pot.eligibleIds.includes(playerId)) return false
+  hand.potWinners ??= {}
+  const winners = new Set(hand.potWinners[potId] ?? pot.winnerIds)
+  if (selected) winners.add(playerId)
+  else winners.delete(playerId)
+  hand.potWinners[potId] = [...winners]
+  recordHandEvent(hand, `${playerName(playerId)}: ${selected ? 'выбран' : 'снят'} победителем банка ${pot.amount}`)
+  return true
 }
 
 export function settleCurrentHand(tournament: Tournament): boolean {
   const hand = getCurrentHand(tournament)
-  if (!hand || streetActionRequirements(tournament, hand, hand.street).length > 0) return false
-  return settlePokerHand(tournament, hand)
+  if (!hand || !canCloseHand(tournament, hand)) return false
+  const checkpoint = makeCheckpoint(tournament, 'settlement', `Начисление банка раздачи №${hand.number}`)
+  if (!settlePokerHand(tournament, hand)) return false
+  pushCheckpoint(tournament, checkpoint)
+  return true
+}
+
+export function canCloseHand(tournament: Tournament, hand: PokerHand): boolean {
+  if (hand.settled || streetActionRequirements(tournament, hand, hand.street).length > 0) return false
+  const contenders = Object.values(hand.players).filter((player) => !player.folded).length
+  return contenders === 1 || (contenders > 1 && hand.street === 'river')
 }
 
 export function canPlayerRebuy(tournament: Tournament, playerId: string, now = Date.now()): boolean {
+  if (!tournament.participantIds.includes(playerId)) return false
   if (tournament.status !== 'live' || !tournament.gameInitialized || getCurrentHand(tournament)) return false
   if (tournament.places[playerId] != null || (tournament.stacks[playerId] ?? 0) > 0) return false
   if ((tournament.rebuys[playerId] ?? 0) >= tournament.maxRebuys) return false
@@ -769,6 +832,7 @@ export function canPlayerRebuy(tournament: Tournament, playerId: string, now = D
 
 export function rebuyPlayer(tournament: Tournament, playerId: string, now = Date.now()): boolean {
   if (!canPlayerRebuy(tournament, playerId, now)) return false
+  pushCheckpoint(tournament, makeCheckpoint(tournament, 'rebuy', `Докупка: ${playerName(playerId)}`))
   tournament.stacks[playerId] = tournament.startingStack
   tournament.rebuys[playerId] = (tournament.rebuys[playerId] ?? 0) + 1
   return true
@@ -781,6 +845,7 @@ export function confirmPlayerElimination(tournament: Tournament, playerId: strin
   const alive = tournament.participantIds.filter((id) => tournament.places[id] == null)
   if (alive.length < 2 || !alive.includes(playerId)) return false
   const handNumber = tournament.hands.at(-1)?.number ?? 0
+  pushCheckpoint(tournament, makeCheckpoint(tournament, 'elimination', `Вылет: ${playerName(playerId)}`))
   const simultaneousPlayerId = tournament.participantIds.find((id) =>
     id !== playerId && tournament.eliminatedInHand[id] === handNumber && tournament.places[id] != null,
   )
@@ -790,26 +855,31 @@ export function confirmPlayerElimination(tournament: Tournament, playerId: strin
   const survivors = alive.filter((id) => id !== playerId)
   if (survivors.length === 1) {
     tournament.places[survivors[0]!] = 1
-    finishTournament(tournament)
+    finishTournament(tournament, false)
   }
   return true
 }
 
 export function pauseTimer(tournament: Tournament): void {
   if (tournament.timerStartedAt === null) return
-  tournament.secondsRemaining = currentSeconds(tournament)
+  tournament.secondsRemaining = remainingMilliseconds(tournament) / 1000
   tournament.timerStartedAt = null
 }
 
-export function nextLevel(tournament: Tournament): void {
-  pauseTimer(tournament)
-  if (tournament.currentLevel >= tournament.levels.length - 1) return
+export function nextLevel(tournament: Tournament): boolean {
+  if (tournament.status !== 'live' || !tournament.gameInitialized || tournament.currentLevel >= tournament.levels.length - 1) return false
+  const next = tournament.levels[tournament.currentLevel + 1]!
+  if (!Number.isInteger(next.minutes) || next.minutes <= 0) return false
+  const wasRunning = tournament.timerStartedAt !== null
   tournament.currentLevel += 1
-  tournament.secondsRemaining = tournament.levels[tournament.currentLevel]!.minutes * 60
+  tournament.secondsRemaining = next.minutes * 60
+  tournament.timerStartedAt = wasRunning ? Date.now() : null
+  return true
 }
 
-export function finishTournament(tournament: Tournament): void {
+export function finishTournament(tournament: Tournament, saveCheckpoint = true): void {
   if (!tournament.gameInitialized || tournament.status === 'finished' || getCurrentHand(tournament)) return
+  if (saveCheckpoint) pushCheckpoint(tournament, makeCheckpoint(tournament, 'finish', 'Завершение турнира'))
   const remaining = tournament.participantIds
     .filter((id) => tournament.places[id] == null)
     .sort((left, right) => (tournament.stacks[right] ?? 0) - (tournament.stacks[left] ?? 0))
@@ -826,4 +896,57 @@ export function finishTournament(tournament: Tournament): void {
   }
   tournament.status = 'finished'
   pauseTimer(tournament)
+}
+
+function playerName(id: string): string {
+  return state.players.find((player) => player.id === id)?.name ?? id
+}
+
+function recordHandEvent(hand: PokerHand, description: string): void {
+  hand.events ??= []
+  hand.events.push({ at: Date.now(), description })
+}
+
+function makeCheckpoint(tournament: Tournament, kind: TournamentCheckpoint['kind'], label: string): TournamentCheckpoint {
+  return cloneValue({ kind, label, at: Date.now(), handNumber: tournament.hands.at(-1)?.number ?? 0,
+    status: tournament.status, stacks: tournament.stacks, rebuys: tournament.rebuys, places: tournament.places,
+    eliminatedInHand: tournament.eliminatedInHand, secondsRemaining: remainingMilliseconds(tournament) / 1000,
+    wasRunning: tournament.timerStartedAt !== null })
+}
+
+function pushCheckpoint(tournament: Tournament, checkpoint: TournamentCheckpoint): void {
+  tournament.operationHistory ??= []
+  tournament.operationHistory.push(checkpoint)
+  tournament.operationHistory = tournament.operationHistory.slice(-20)
+}
+
+export function canUndoLastOperation(tournament: Tournament): boolean {
+  const checkpoint = tournament.operationHistory?.at(-1)
+  return Boolean(checkpoint && !getCurrentHand(tournament) && checkpoint.handNumber === (tournament.hands.at(-1)?.number ?? 0))
+}
+
+export function undoLastOperation(tournament: Tournament): boolean {
+  if (!canUndoLastOperation(tournament)) return false
+  const checkpoint = tournament.operationHistory!.pop()!
+  const wasFinished = tournament.status === 'finished'
+  for (const key of ['stacks', 'rebuys', 'places', 'eliminatedInHand'] as const) tournament[key] = cloneValue(checkpoint[key])
+  tournament.status = checkpoint.status
+  if (wasFinished) {
+    tournament.secondsRemaining = checkpoint.secondsRemaining
+    tournament.timerStartedAt = checkpoint.wasRunning ? Date.now() : null
+  }
+  if (checkpoint.kind === 'settlement') {
+    const hand = tournament.hands.at(-1)!
+    hand.settled = false
+    delete hand.settlement
+    delete hand.endedAt
+    recordHandEvent(hand, 'Начисление банка отменено')
+  }
+  return true
+}
+
+export function cancelCurrentHand(tournament: Tournament): boolean {
+  if (!getCurrentHand(tournament)) return false
+  tournament.hands.pop()
+  return true
 }

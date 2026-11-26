@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { addPlayer, removePlayerFromSeason, state } from '@/stores/poker'
+import { addPlayer, playerHasHistory, removePlayerFromSeason, state } from '@/stores/poker'
+import KitIcon from '@/components/KitIcon.vue'
 
 const newPlayerName = ref('')
 const message = ref('')
@@ -49,11 +50,14 @@ function deleteParticipant(playerId: string) {
   const player = state.players.find((item) => item.id === playerId)
   if (!player) return
 
-  const confirmed = window.confirm(`Удалить ${player.name} из списка сезона? Он будет удалён из составов и результатов всех турниров.`)
+  if (playerHasHistory(playerId)) {
+    message.value = 'Нельзя удалить участника начатой игры: его ставки и результаты должны сохраниться.'
+    return
+  }
+  const confirmed = window.confirm(`Удалить ${player.name} из списка сезона и составов предстоящих турниров?`)
   if (!confirmed) return
 
-  removePlayerFromSeason(playerId)
-  message.value = `${player.name} удалён из списка сезона и всех турниров.`
+  message.value = removePlayerFromSeason(playerId) ? `${player.name} удалён из списка сезона.` : 'Участник уже задействован в начатой игре. Удаление отменено.'
 }
 </script>
 
@@ -77,7 +81,7 @@ function deleteParticipant(playerId: string) {
       <label class="field" for="new-participant-name">Добавить участника</label>
       <div class="add-participant-controls">
         <input id="new-participant-name" v-model="newPlayerName" maxlength="40" placeholder="Имя участника">
-        <button class="button button-dark" type="submit">＋ Добавить</button>
+        <button class="button button-dark" type="submit">Добавить</button>
       </div>
     </form>
 
@@ -89,7 +93,7 @@ function deleteParticipant(playerId: string) {
           <span class="sr-only">Имя участника</span>
           <input :value="player.name" :aria-label="`Имя участника ${player.name}`" maxlength="40" @change="renameParticipant(player.id, $event)">
         </label>
-        <button class="remove-player-button" type="button" @click="deleteParticipant(player.id)">Удалить</button>
+        <button class="remove-player-button" type="button" :disabled="playerHasHistory(player.id)" :title="playerHasHistory(player.id) ? 'Участник начатой или завершённой игры: удаление недоступно' : ''" @click="deleteParticipant(player.id)">Удалить</button>
       </div>
     </div>
     <div v-else class="empty-state participant-empty-state">
@@ -97,6 +101,6 @@ function deleteParticipant(playerId: string) {
       <span>Добавьте участников, чтобы выбирать их в турнирах.</span>
     </div>
 
-    <p class="fine-print">Удаление здесь убирает участника из списка сезона, составов и результатов всех турниров. Чтобы исключить игрока только из одной игры, снимите отметку в составе этого турнира.</p>
+    <p class="fine-print">Удалять можно только участников, которые ещё не играли. Составы начатых игр и история защищены. Чтобы исключить игрока из предстоящей игры, снимите отметку в составе этого турнира.</p>
   </section>
 </template>

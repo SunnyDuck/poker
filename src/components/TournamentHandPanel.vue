@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { canAdvanceHandStreet, canPlayerCheck, classifyHandActions, handActionCount, handActionPot, handPot, handStreets, handStreetPot, isPlayerAllIn, isPlayerVisibleOnStreet, nextHandActionIndex, playerCashout, playerInvestment, playerNetBalance, playerHandContribution, playerStreetContribution, projectedStack, streetActionRequirements, tournamentPrizePool } from '@/domain/game'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { canAdvanceHandStreet, canPlayerCheck, canSettlePokerHand, handActionCount, handActionPot, handDistribution, handPot, handStreets, handStreetPot, isPlayerAllIn, isPlayerVisibleOnStreet, nextHandActionIndex, playerCashout, playerInvestment, playerNetBalance, playerHandContribution, playerStreetContribution, projectedStack, streetActionRequirements, tournamentPrizePool } from '@/domain/game'
+import { formatCountdown, formatKrasnoyarskDateTime } from '@/domain/time'
 import type { HandStreet, PokerActionType, Tournament } from '@/domain/types'
 import {
   canPlayerRebuy,
+  canCloseHand,
+  canUndoLastOperation,
+  cancelCurrentHand,
   addHandBetActionColumn,
   confirmPlayerElimination,
   getCurrentHand,
@@ -13,14 +17,22 @@ import {
   setHandFolded,
   setHandStreet,
   setHandWinner,
+  setHandPotWinner,
   settleCurrentHand,
   startNextHand,
   state,
+  undoLastOperation,
 } from '@/stores/poker'
+import KitIcon from '@/components/KitIcon.vue'
 
 const props = defineProps<{ tournament: Tournament }>()
 const message = ref('')
 const hand = computed(() => getCurrentHand(props.tournament))
+const distribution = computed(() => hand.value ? handDistribution(hand.value) : null)
+const now = ref(Date.now())
+let clockInterval: number | undefined
+onMounted(() => { clockInterval = window.setInterval(() => { now.value = Date.now() }, 500) })
+onUnmounted(() => { if (clockInterval != null) window.clearInterval(clockInterval) })
 const pot = computed(() => hand.value ? handPot(hand.value) : 0)
 const streetActionCount = computed(() => {
   const currentHand = hand.value
@@ -73,10 +85,7 @@ const wagersWithinStacks = computed(() => hand.value
   ? Object.entries(hand.value.players).every(([id, player]) => playerHandContribution(player) <= (props.tournament.stacks[id] ?? 0))
   : false)
 const canSettle = computed(() => {
-  if (!hand.value || !wagersWithinStacks.value) return false
-  if (streetActionRequirements(props.tournament, hand.value, hand.value.street).length > 0) return false
-  const winners = Object.values(hand.value.players).filter((player) => player.takesPot && !player.folded).length
-  return pot.value === 0 || winners > 0
+  return Boolean(hand.value && canCloseHand(props.tournament, hand.value) && canSettlePokerHand(props.tournament, hand.value))
 })
 const totalCashIn = computed(() => participants.value.reduce((sum, player) => sum + playerInvestment(props.tournament, player.id), 0))
 const displayedPrizePool = computed(() => tournamentPrizePool(props.tournament))
@@ -87,6 +96,10 @@ const handHistory = computed(() => props.tournament.hands.filter((item) => item.
   winners: Object.entries(item.players)
     .filter(([, player]) => player.takesPot && !player.folded)
     .map(([id]) => state.players.find((player) => player.id === id)?.name ?? 'Удалённый участник'),
+  startedAt: item.startedAt,
+  endedAt: item.endedAt,
+  duration: item.startedAt != null && item.endedAt != null ? formatCountdown(Math.max(0, item.endedAt - item.startedAt) / 1000) : '—',
+  events: item.events ?? [],
 })))
 const actionLabels: Record<PokerActionType, string> = {
   check: 'Чек',
@@ -144,13 +157,6 @@ function onBetChange(playerId: string, street: HandStreet, actionIndex: number, 
     return
   }
   if (amount === 0) setHandAction(props.tournament, playerId, street, actionIndex, 'check')
-  else if (hand.value) {
-    if (isPlayerAllIn(props.tournament, hand.value, playerId)) setHandAction(props.tournament, playerId, street, actionIndex, 'all-in')
-    else {
-      if (hand.value.players[playerId]?.actions[street][actionIndex] === 'all-in') setHandAction(props.tournament, playerId, street, actionIndex, null)
-      classifyHandActions(hand.value, street)
-    }
-  }
   message.value = ''
 }
 
@@ -190,7 +196,6 @@ function onAllIn(playerId: string) {
     message.value = 'Не удалось выставить оставшийся стек.'
     return
   }
-  classifyHandActions(currentHand, street)
   setHandAction(props.tournament, playerId, street, actionIndex, 'all-in')
   message.value = `${participants.value.find((entry) => entry.id === playerId)?.name ?? 'Игрок'} идёт олл-ин на ${chipFormat.format(amount)} фишек.`
 }
@@ -236,6 +241,9 @@ function addActionColumn() {
 }
 
 function closeHand() {
+  if (!canSettle.value || !distribution.value) return
+  const payouts = Object.entries(distribution.value.awards).map(([id, amount]) => `${playerName(id)}: ${chipFormat.format(amount)}`).join(', ')
+  if (!window.confirm(`Начислить банк раздачи №${hand.value?.number}? ${payouts || 'Нет призовых выплат'}. Неуравнённые ставки будут возвращены.`)) return
   if (!settleCurrentHand(props.tournament)) {
     message.value = pot.value > 0
       ? 'Отметьте игрока, который забирает банк.'
@@ -248,7 +256,30 @@ function closeHand() {
 function openNextHand() {
   message.value = startNextHand(props.tournament)
     ? ''
-    : 'Нужно не меньше двух игроков с фишками, чтобы начать раздачу.'
+    : props.tournament.levels[props.tournament.currentLevel]?.break ? 'Сейчас перерыв. Сначала переключите уровень вручную.' : 'Проверьте стеки и подтвердите вылеты игроков перед новой раздачей.'
+}
+
+function playerName(playerId: string): string {
+  return participants.value.find((entry) => entry.id === playerId)?.name ?? 'Игрок'
+}
+
+function onFold(playerId: string, event: Event) {
+  const input = event.target as HTMLInputElement
+  if (!setHandFolded(props.tournament, playerId, input.checked)) {
+    input.checked = hand.value?.players[playerId]?.folded ?? false
+    message.value = 'В раздаче должен остаться хотя бы один игрок.'
+  }
+}
+
+function undoOperation() {
+  const checkpoint = props.tournament.operationHistory?.at(-1)
+  if (!checkpoint || !window.confirm(`Отменить действие «${checkpoint.label}»? Стеки и места будут восстановлены.`)) return
+  message.value = undoLastOperation(props.tournament) ? 'Действие отменено.' : 'Сначала отмените текущую незавершённую раздачу.'
+}
+
+function cancelHand() {
+  if (!window.confirm('Отменить текущую раздачу? Внесённые в неё ставки не будут списаны со стеков. Записи этой раздачи будут удалены.')) return
+  message.value = cancelCurrentHand(props.tournament) ? 'Раздача отменена.' : 'Нет незавершённой раздачи.'
 }
 
 function onRebuy(playerId: string) {
@@ -314,6 +345,7 @@ function stageName(street: HandStreet): string {
                     :max="availableForAction(entry.id, hand.street, actionIndex)"
                     :aria-label="`${entry.name}, ${currentStreetLabel}, действие ${actionIndex + 1}`"
                     :value="entry.player.bets[hand.street][actionIndex] ?? 0"
+                    :readonly="hand.street === 'preflop' && actionIndex === 0 && [hand.roles?.smallBlind, hand.roles?.bigBlind].includes(entry.id)"
                     :disabled="entry.player.folded || (isPlayerAllIn(tournament, hand, entry.id) && !(entry.player.bets[hand.street][actionIndex] ?? 0))"
                     @change="onBetChange(entry.id, hand.street, actionIndex, $event)"
                   >
@@ -333,8 +365,8 @@ function stageName(street: HandStreet): string {
                   @click="onAllIn(entry.id)"
                 >Олл-ин</button>
               </td>
-              <td><input type="checkbox" :aria-label="`${entry.name} сбросил карты`" :checked="entry.player.folded" :disabled="isPlayerAllIn(tournament, hand, entry.id)" @change="setHandFolded(tournament, entry.id, ($event.target as HTMLInputElement).checked)"></td>
-              <td><input type="checkbox" :aria-label="`${entry.name} забирает банк`" :checked="entry.player.takesPot" :disabled="entry.player.folded" @change="setHandWinner(tournament, entry.id, ($event.target as HTMLInputElement).checked)"></td>
+              <td><input type="checkbox" :aria-label="`${entry.name} сбросил карты`" :checked="entry.player.folded" :disabled="isPlayerAllIn(tournament, hand, entry.id)" @change="onFold(entry.id, $event)"></td>
+              <td><input type="checkbox" :aria-label="`${entry.name} забирает банк`" :checked="entry.player.takesPot" :disabled="entry.player.folded || (distribution?.pots.length ?? 0) > 1" :title="(distribution?.pots.length ?? 0) > 1 ? 'Выберите победителей отдельных банков ниже' : ''" @change="setHandWinner(tournament, entry.id, ($event.target as HTMLInputElement).checked)"></td>
             </tr>
             <tr class="hand-pot-row">
               <th scope="row">Всего внесено</th>
@@ -347,24 +379,38 @@ function stageName(street: HandStreet): string {
         </table>
       </div>
 
+      <div v-if="distribution" class="pot-distribution">
+        <div v-if="distribution.pots.length > 1" class="side-pot-list">
+          <fieldset v-for="(bank, index) in distribution.pots" :key="bank.id">
+            <legend>{{ index === 0 ? 'Основной банк' : `Побочный банк ${index}` }} · {{ chipFormat.format(bank.amount) }} фишек</legend>
+            <label v-for="id in bank.eligibleIds" :key="id"><input type="checkbox" :aria-label="`Банк ${index + 1}: ${playerName(id)}`" :checked="bank.winnerIds.includes(id)" :disabled="bank.eligibleIds.length === 1" @change="setHandPotWinner(tournament, bank.id, id, ($event.target as HTMLInputElement).checked)">{{ playerName(id) }}</label>
+          </fieldset>
+        </div>
+        <p v-for="(amount, id) in distribution.refunds" :key="id" class="fine-print">Возврат неуравнённой ставки: {{ playerName(String(id)) }} · {{ chipFormat.format(amount) }} фишек.</p>
+        <p v-if="hand.street !== 'river' && Object.values(hand.players).filter(player => !player.folded).length > 1" class="fine-print">Для начисления банка завершите раздачу до ривера и выберите победителей. При олл-ине остальные улицы можно пройти без ставок.</p>
+      </div>
       <div class="hand-actions">
-        <p class="fine-print">{{ wagersWithinStacks ? `Блайнды подставляются автоматически. Для каждой улицы указывайте добавленные фишки по действиям: приложение подпишет равный взнос как колл, превышение как ставку или рейз; нулевое действие отмечайте кнопкой «Чек». Суммы автоматически складываются; несколько победителей делят общий банк поровну.` : 'Сумма ставок игрока превышает его стек.' }}</p>
+        <p class="fine-print">{{ wagersWithinStacks ? `Записывайте добавленные фишки, а не итоговую ставку. Действия в столбце идут по порядку мест; после рейза вернувшийся колл записывайте в следующем столбце. Несколько победителей делят выбранный банк. Нечётная фишка достаётся первому победителю слева от дилера.` : 'Сумма ставок игрока превышает его стек.' }}</p>
         <div class="hand-action-buttons">
           <button class="button button-outline" type="button" @click="addActionColumn">＋ Столбец действия</button>
           <button class="button button-dark" type="button" :disabled="!canSettle" @click="closeHand">Завершить раздачу и начислить банк</button>
+          <button class="text-button danger-text" type="button" @click="cancelHand">Отменить текущую раздачу</button>
         </div>
       </div>
     </template>
     <div v-else class="next-hand-row">
       <p class="muted">{{ !tournament.initialDealerId && !tournament.hands.some((item) => item.roles) ? 'Выберите первого дилера в составе игры.' : tournament.hands.length ? 'Предыдущая раздача сохранена. Начните следующую, чтобы продолжить учёт.' : 'Турнир начат. Запустите первую раздачу.' }}</p>
-      <button class="button button-dark" type="button" :disabled="tournament.status === 'finished' || (!tournament.initialDealerId && !tournament.hands.some((item) => item.roles)) || participants.filter(({ id }) => tournament.places[id] == null && (tournament.stacks[id] ?? 0) > 0).length < 2 || participants.some(({ id }) => tournament.places[id] == null && (tournament.stacks[id] ?? 0) === 0)" @click="openNextHand">＋ Начать раздачу</button>
+      <button class="button button-dark" type="button" :disabled="tournament.status === 'finished' || tournament.levels[tournament.currentLevel]?.break || (!tournament.initialDealerId && !tournament.hands.some((item) => item.roles)) || participants.filter(({ id }) => tournament.places[id] == null && (tournament.stacks[id] ?? 0) > 0).length < 2 || participants.some(({ id }) => tournament.places[id] == null && (tournament.stacks[id] ?? 0) === 0)" @click="openNextHand">＋ Начать раздачу</button>
     </div>
 
     <p v-if="message" class="participant-message" role="status">{{ message }}</p>
+    <p v-if="tournament.levels[tournament.currentLevel]?.break && !hand" class="fine-print" role="status">Перерыв: новые раздачи доступны после ручного перехода к игровому уровню.</p>
+    <div v-if="tournament.operationHistory?.length" class="undo-operation"><button class="button button-outline" :disabled="!canUndoLastOperation(tournament)" @click="undoOperation"><KitIcon name="undo" />Отменить: {{ tournament.operationHistory.at(-1)?.label }}</button><p v-if="hand" class="fine-print">Чтобы отменить предыдущее начисление или вылет, сначала отмените текущую раздачу.</p></div>
+    <details v-if="hand?.events?.length"><summary>Записи текущей раздачи</summary><ol><li v-for="(event, index) in hand.events" :key="index">{{ formatKrasnoyarskDateTime(event.at) }} · {{ event.description }}</li></ol></details>
     <details v-if="handHistory.length" class="hand-history">
       <summary>История раздач · {{ handHistory.length }}</summary>
       <ol>
-        <li v-for="item in handHistory" :key="item.number"><strong>№ {{ item.number }}</strong><span>{{ item.street }} · {{ chipFormat.format(item.pot) }} фишек</span><span>Забрали: {{ item.winners.join(', ') || 'банк не разыгран' }}</span></li>
+        <li v-for="item in handHistory" :key="item.number"><strong>№ {{ item.number }}</strong><span>{{ item.street }} · {{ chipFormat.format(item.pot) }} фишек</span><span>Забрали: {{ item.winners.join(', ') || 'банк не разыгран' }}</span><span>{{ formatKrasnoyarskDateTime(item.startedAt) }} → {{ formatKrasnoyarskDateTime(item.endedAt) }} · Длительность {{ item.duration }}</span><details v-if="item.events.length"><summary>Действия по времени</summary><ol><li v-for="(event, index) in item.events" :key="index">{{ formatKrasnoyarskDateTime(event.at) }} · {{ event.description }}</li></ol></details></li>
       </ol>
     </details>
   </section>
@@ -389,11 +435,11 @@ function stageName(street: HandStreet): string {
               <template v-if="tournament.gameInitialized && tournament.places[player.id] == null && (tournament.stacks[player.id] ?? 0) === 0">
                 <span v-if="hand" class="muted">Ждём конца раздачи</span>
                 <template v-else>
-                  <button v-if="canPlayerRebuy(tournament, player.id)" class="text-button" type="button" @click="onRebuy(player.id)">＋ Докупка</button>
+                  <button v-if="canPlayerRebuy(tournament, player.id, now)" class="text-button" type="button" @click="onRebuy(player.id)">＋ Докупка</button>
                   <button class="text-button danger-text" type="button" @click="onElimination(player.id)">Подтвердить вылет</button>
                 </template>
               </template>
-              <span v-else-if="tournament.places[player.id] != null" class="muted">Выбыл</span>
+              <span v-else-if="tournament.places[player.id] != null" class="muted">{{ tournament.places[player.id] === 1 ? 'Победитель' : 'Выбыл' }}</span>
               <span v-else>—</span>
             </td>
           </tr>
@@ -406,6 +452,10 @@ function stageName(street: HandStreet): string {
 </template>
 
 <style scoped>
+.side-pot-list{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}
+.side-pot-list fieldset{border:1px solid var(--line);padding:12px;border-radius:6px;min-width:230px}
+.side-pot-list label{display:flex;gap:8px;align-items:center;margin:6px 0}
+.undo-operation{margin:14px 0}
 .hand-tracking-panel .hand-street-tabs button {
   min-height: 48px;
   padding: 11px 18px;

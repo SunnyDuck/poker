@@ -1,6 +1,6 @@
 import type { DemoState, BlindLevel, Tournament } from './types'
 
-const seasonLevels: BlindLevel[] = [
+export const seasonLevels: BlindLevel[] = [
   { small: 25, big: 50, minutes: 45 },
   { small: 50, big: 100, minutes: 45 },
   { small: 0, big: 0, minutes: 10, break: true },

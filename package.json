@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "test": "node --experimental-strip-types --test tests/game.test.ts && node --test tests/sheets-roundtrip.test.cjs tests/tournament-simulation.test.mjs"
+    "test": "node --experimental-strip-types --test tests/game.test.ts && node --test tests/sheets-roundtrip.test.cjs tests/tournament-simulation.test.mjs tests/tournament-regressions.test.mjs"
   },
   "dependencies": {
     "vue": "^3.5.42",

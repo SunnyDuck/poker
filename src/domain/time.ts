@@ -21,12 +21,41 @@ const krasnoyarskParts = new Intl.DateTimeFormat('en-CA', {
 
 export function formatKrasnoyarskDateTime(timestamp: number | null | undefined): string {
   if (timestamp == null || !Number.isFinite(timestamp)) return '—'
-  return krasnoyarskDateTime.format(new Date(timestamp))
+  const date = new Date(timestamp)
+  return Number.isFinite(date.getTime()) ? krasnoyarskDateTime.format(date) : '—'
+}
+
+export function isValidDate(value: string): boolean {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T12:00:00Z`)
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+}
+
+export function isValidTime(value: string): boolean {
+  return typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value)
+}
+
+export function krasnoyarskToday(now = Date.now()): string {
+  const parts = Object.fromEntries(krasnoyarskParts.formatToParts(new Date(now)).map(({ type, value }) => [type, value]))
+  return `${parts.year}-${parts.month}-${parts.day}`
+}
+
+export function formatTournamentDate(value: string, weekday = false, year = false): string {
+  if (!isValidDate(value)) return 'Дата не задана'
+  return new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Asia/Krasnoyarsk', day: 'numeric', month: 'long',
+    ...(weekday ? { weekday: 'long' as const } : {}), ...(year ? { year: 'numeric' as const } : {}),
+  }).format(new Date(`${value}T12:00:00+07:00`))
+}
+
+export function formatCountdown(seconds: number): string {
+  const whole = Math.max(0, Math.ceil(seconds))
+  return `${Math.floor(whole / 60).toString().padStart(2, '0')}:${(whole % 60).toString().padStart(2, '0')}`
 }
 
 export function isBeforeKrasnoyarskCutoff(startedAt: number | null | undefined, cutoff: string, now = Date.now()): boolean {
   if (!cutoff) return true
-  const cutoffMatch = cutoff.match(/^(\d{2}):(\d{2})$/)
+  const cutoffMatch = isValidTime(cutoff) ? cutoff.match(/^(\d{2}):(\d{2})$/) : null
   if (!cutoffMatch) return false
 
   const parts = (timestamp: number) => Object.fromEntries(krasnoyarskParts.formatToParts(new Date(timestamp)).map(({ type, value }) => [type, value]))

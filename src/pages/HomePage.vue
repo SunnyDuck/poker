@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { calculateStandings } from '@/domain/rating'
 import { handPot, tournamentPrizePool } from '@/domain/game'
 import { state } from '@/stores/poker'
+import { formatTournamentDate } from '@/domain/time'
+import KitIcon from '@/components/KitIcon.vue'
 
 const numberFormat = new Intl.NumberFormat('ru-RU')
 const moneyFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
@@ -34,7 +36,8 @@ const playerStatistics = computed(() => state.players.map((player) => {
     wins: playedTournaments.filter((tournament) => tournament.places[player.id] === 1).length,
     podiums: places.filter((place) => place <= 3).length,
     handsWon: wonHands.length,
-    largestPot: wonHands.reduce((largest, hand) => Math.max(largest, handPot(hand)), 0),
+    largestPot: wonHands.reduce((largest, hand) => Math.max(largest, hand.settlement?.awards[player.id]
+      ?? handPot(hand) / Math.max(1, Object.values(hand.players).filter((entry) => entry.takesPot && !entry.folded).length)), 0),
     raises: actions.filter((action) => action === 'raise').length,
     calls: actions.filter((action) => action === 'call').length,
     checks: actions.filter((action) => action === 'check').length,
@@ -46,9 +49,7 @@ const selectedNames = (ids: string[]) => ids.map((id) => state.players.find((pla
 const playerName = (id: string) => state.players.find((player) => player.id === id)?.name ?? 'Игрок'
 
 function dateLabel(date: string, weekday = false) {
-  return new Intl.DateTimeFormat('ru-RU', {
-    day: 'numeric', month: 'long', ...(weekday ? { weekday: 'long' } : {}),
-  }).format(new Date(`${date}T12:00:00`))
+  return formatTournamentDate(date, weekday)
 }
 
 function statusLabel(status: string) {
@@ -61,15 +62,16 @@ function statusLabel(status: string) {
     <section class="hero wrap">
       <div class="hero-copy">
         <div class="eyebrow">ТЕХАССКИЙ ХОЛДЕМ · СЕЗОН 1</div>
-        <h1>Friendly Poker</h1>
-        <p>Три турнира. Один чемпион.</p>
-        <div class="hero-meta"><span>♧ {{ state.tournaments.length }} игры</span><span>♙ до 10 игроков</span><span>◷ по пятницам, 18:00</span></div>
+        <h1>Galaxy Poker</h1>
+        <p>Три турнира. Один чемпион. Блеф — по настроению.</p>
+        <div class="hero-meta"><span><KitIcon name="games" /> {{ state.tournaments.length }} игры</span><span><KitIcon name="people" /> до 10 игроков</span><span>◷ по пятницам, 18:00</span></div>
       </div>
       <div class="next-card" v-if="upcoming">
         <div class="eyebrow">{{ upcoming.status === 'live' ? 'ТЕКУЩИЙ ТУРНИР' : 'СЛЕДУЮЩАЯ ИГРА' }}</div>
         <div class="next-date">{{ dateLabel(upcoming.date) }}</div>
         <div class="next-title">{{ upcoming.title }} <span>{{ upcoming.startTime }}</span></div>
         <div class="next-detail">Переговорная комната · {{ selectedNames(upcoming.participantIds).length }} участников</div>
+        <div class="poker-chip-stack" aria-hidden="true"><span class="poker-chip poker-chip-lime">♠</span><span class="poker-chip poker-chip-yellow">♦</span></div>
         <RouterLink v-if="upcoming.status === 'live'" class="button button-gold" :to="`/screen/${upcoming.id}`">Открыть табло</RouterLink>
       </div>
     </section>
@@ -106,7 +108,7 @@ function statusLabel(status: string) {
       </div>
       <div class="player-stat-heading"><div><div class="eyebrow">ИГРОКИ В ЦИФРАХ</div><h3>Статистика участников</h3></div><span class="muted">Показаны все {{ state.players.length }} игроков</span></div>
       <div v-if="playerStatistics.length" class="table-wrap player-stat-table">
-        <table><thead><tr><th>Игрок</th><th>Турниров</th><th>Турнирных побед</th><th>Топ-3</th><th>Раздач выиграно</th><th>Крупнейший банк</th><th>Рейзы</th><th>Коллы</th><th>Чеки</th><th>Фолды</th><th>Лучшее место</th></tr></thead>
+        <table><thead><tr><th>Игрок</th><th>Турниров</th><th>Турнирных побед</th><th>Топ-3</th><th>Раздач выиграно</th><th>Крупнейший выигрыш, фишки</th><th>Рейзы</th><th>Коллы</th><th>Чеки</th><th>Фолды</th><th>Лучшее место</th></tr></thead>
           <tbody><tr v-for="stats in playerStatistics" :key="stats.player.id"><td>{{ stats.player.name }}</td><td>{{ stats.tournaments }}</td><td>{{ stats.wins }}</td><td>{{ stats.podiums }}</td><td>{{ stats.handsWon }}</td><td>{{ numberFormat.format(stats.largestPot) }}</td><td>{{ stats.raises }}</td><td>{{ stats.calls }}</td><td>{{ stats.checks }}</td><td>{{ stats.folds }}</td><td>{{ stats.bestPlace ?? '—' }}</td></tr></tbody>
         </table>
       </div>

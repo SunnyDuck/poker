@@ -36,6 +36,32 @@ export interface PokerHand {
   players: Record<string, HandPlayerState>
   settled: boolean
   roles: HandRoles | null
+  /** Nominal blind at the start of this hand, independent of a short blind's stack. */
+  bigBlind?: number
+  potWinners?: Record<string, string[]>
+  settlement?: { awards: Record<string, number>; refunds: Record<string, number> }
+  startedAt?: number
+  endedAt?: number
+  events?: HandEvent[]
+}
+
+export interface HandEvent {
+  at: number
+  description: string
+}
+
+export interface TournamentCheckpoint {
+  kind: 'settlement' | 'rebuy' | 'elimination' | 'finish'
+  label: string
+  at: number
+  handNumber: number
+  status: TournamentStatus
+  stacks: Record<string, number>
+  rebuys: Record<string, number>
+  places: Record<string, number>
+  eliminatedInHand: Record<string, number>
+  secondsRemaining: number
+  wasRunning: boolean
 }
 
 export interface Tournament {
@@ -62,6 +88,7 @@ export interface Tournament {
   secondsRemaining: number
   timerStartedAt: number | null
   startedAt: number | null
+  operationHistory?: TournamentCheckpoint[]
 }
 
 export interface DemoState {

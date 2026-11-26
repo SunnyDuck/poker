@@ -123,13 +123,13 @@ function updateRememberAccess() {
 </template>
 
 <style scoped>
-.google-sync-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:24px}
+.google-sync-panel{background:var(--surface-default);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:24px}
 .sync-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .sync-panel-heading>div{display:flex;align-items:center;gap:10px}
 .sync-panel-heading strong{font-size:13px;color:var(--green)}
 .sync-status-label{font-size:11px;color:var(--muted)}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#a3aaa5;flex:none}
-.sync-connected .sync-dot{background:#39815b}.sync-saving .sync-dot,.sync-connecting .sync-dot{background:#c08a25}.sync-error .sync-dot,.sync-conflict .sync-dot{background:#bd4c3e}
+.sync-connected .sync-dot{background:var(--green-500)}.sync-saving .sync-dot,.sync-connecting .sync-dot{background:var(--yellow-500)}.sync-error .sync-dot,.sync-conflict .sync-dot{background:var(--salmon-500)}
 .sync-description{margin:8px 0 0;font-size:11px;line-height:1.5;color:var(--muted)}
 .sync-key-form{display:flex;align-items:end;gap:12px;margin-top:10px}
 .sync-key-form .field,.sync-key-actions .field{flex:1;margin:0}
@@ -141,7 +141,7 @@ function updateRememberAccess() {
 .sync-key-actions{display:flex;align-items:end;gap:12px;margin-top:10px}
 .sync-key-actions .text-button{font-size:11px;white-space:nowrap}
 .sync-security-note{margin:8px 0 0;font-size:10px;line-height:1.4;color:var(--muted)}
-.sync-error{margin:8px 0 0;color:#b0392d;font-size:11px}
+.sync-error{margin:8px 0 0;color:var(--salmon-500);font-size:11px}
 .conflict-actions{margin-top:12px;flex-wrap:wrap}
 @media(max-width:600px){.sync-key-form,.sync-key-actions,.sync-key-options{align-items:stretch;flex-direction:column}.sync-key-form .button{align-self:flex-start}.remember-access{white-space:normal}}
 </style>
