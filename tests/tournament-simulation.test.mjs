@@ -536,24 +536,36 @@ test("runs a seeded six-player tournament and restores every hand from local and
       gameInitialized: true,
       stacks: { "tie-a": 0, "tie-b": 0, "tie-c": 100, "tie-d": 100 },
       hands: [
-        { number: 7, street: "river", players: {}, settled: true, roles: null },
+        {
+          number: 7,
+          street: "river",
+          players: {},
+          settled: true,
+          roles: null,
+          startingStacks: {
+            "tie-a": 100,
+            "tie-b": 100,
+            "tie-c": 200,
+            "tie-d": 200,
+          },
+        },
       ],
     });
     assert.equal(store.confirmPlayerElimination(tieTournament, "tie-a"), true);
     assert.equal(store.confirmPlayerElimination(tieTournament, "tie-b"), true);
-    assert.equal(tieTournament.places["tie-a"], 4);
-    assert.equal(tieTournament.places["tie-b"], 4);
-    assert.equal(rating.tournamentPoints(tieTournament, "tie-a"), 3);
-    assert.equal(rating.tournamentPoints(tieTournament, "tie-b"), 3);
-    assert.equal(rating.placePoints(4), 3);
+    assert.equal(tieTournament.places["tie-a"], 3);
+    assert.equal(tieTournament.places["tie-b"], 3);
+    assert.equal(rating.tournamentPoints(tieTournament, "tie-a"), 5);
+    assert.equal(rating.tournamentPoints(tieTournament, "tie-b"), 5);
+    assert.equal(rating.placePoints(3), 5);
     assert.equal(
       rating.tournamentPoints(tieTournament, "tie-b"),
-      rating.placePoints(4),
+      rating.placePoints(3),
     );
     assert.equal(
-      Object.values(tieTournament.places).includes(3),
+      Object.values(tieTournament.places).includes(4),
       false,
-      "third place is skipped when two players tie for fourth",
+      "fourth place is skipped when two players tie for third",
     );
 
     if (process.env.WRITE_SIMULATION_HISTORY === "1") {

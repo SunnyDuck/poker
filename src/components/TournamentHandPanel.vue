@@ -194,9 +194,17 @@ const displayedPrizePool = computed(() =>
 );
 const currentTournamentTable = computed(() => {
   const game = props.tournament;
-  const eliminated = game.participantIds.filter(
-    (id) => game.places[id] != null,
-  ).length;
+  const lastAssignedPlace = game.participantIds.reduce((highest, id) => {
+    const place = game.places[id];
+    if (place == null) return highest;
+    const handNumber = game.eliminatedInHand[id];
+    const tiedPlayers = game.participantIds.filter(
+      (otherId) =>
+        game.places[otherId] === place &&
+        game.eliminatedInHand[otherId] === handNumber,
+    ).length;
+    return Math.max(highest, place + tiedPlayers - 1);
+  }, 0);
   const activePlayers = participants.value
     .filter(({ id }) => game.places[id] == null)
     .slice()
@@ -207,7 +215,7 @@ const currentTournamentTable = computed(() => {
           game.participantIds.indexOf(right.id),
     );
   const activePlaces = new Map(
-    activePlayers.map(({ id }, index) => [id, eliminated + index + 1]),
+    activePlayers.map(({ id }, index) => [id, lastAssignedPlace + index + 1]),
   );
   const seasonPoints = new Map(
     calculateStandings({
@@ -695,7 +703,7 @@ const onElimination = (playerId: string) => {
   if (
     !player ||
     !window.confirm(
-      `Подтвердить вылет ${player.name}? Приложение автоматически определит место.`,
+      `Подтвердить вылет ${player.name}? При одновременном вылете место определяется по стеку до начала раздачи.`,
     )
   )
     return;

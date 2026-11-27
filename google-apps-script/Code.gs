@@ -268,7 +268,7 @@ function readTournamentSheet_(sheet) {
           }
           const extras = readJsonChunks_(sheet, storedDataRow + rowIndex, 34) || {}
           handExtrasByNumber[number] = extras
-          ;['bigBlind', 'potWinners', 'settlement', 'startedAt', 'endedAt', 'events'].forEach(function (key) {
+          ;['bigBlind', 'startingStacks', 'potWinners', 'settlement', 'startedAt', 'endedAt', 'events'].forEach(function (key) {
             if (Object.prototype.hasOwnProperty.call(extras, key)) handsByNumber[number][key] = extras[key]
           })
         }
@@ -431,7 +431,7 @@ function writeTournamentSheet_(spreadsheet, tournament, playerNames) {
   const handExtras = []
   ;(tournament.hands || []).forEach(function (hand) {
     const extras = {}
-    ;['bigBlind', 'potWinners', 'settlement', 'startedAt', 'endedAt', 'events'].forEach(function (key) {
+    ;['bigBlind', 'startingStacks', 'potWinners', 'settlement', 'startedAt', 'endedAt', 'events'].forEach(function (key) {
       if (Object.prototype.hasOwnProperty.call(hand, key)) extras[key] = hand[key]
     })
     const actionPlayerIds = Object.keys(hand.players || {}).filter(function (id) { return Boolean(hand.players[id].actions) })

@@ -285,6 +285,9 @@ export const createPokerActions = (state: DemoState) => {
       Boolean(previous?.roles),
     );
     const hand = createPokerHand((previous?.number ?? 0) + 1, activeIds, roles);
+    hand.startingStacks = Object.fromEntries(
+      activeIds.map((id) => [id, tournament.stacks[id] ?? 0]),
+    );
     const blindLevel = tournament.levels
       .slice(0, tournament.currentLevel + 1)
       .reverse()
@@ -608,6 +611,9 @@ export const createPokerActions = (state: DemoState) => {
     );
     if (alive.length < 2 || !alive.includes(playerId)) return false;
     const handNumber = tournament.hands.at(-1)?.number ?? 0;
+    const eliminationHand = tournament.hands.find(
+      (hand) => hand.number === handNumber,
+    );
     pushCheckpoint(
       tournament,
       makeCheckpoint(
@@ -616,16 +622,50 @@ export const createPokerActions = (state: DemoState) => {
         `Вылет: ${playerName(playerId)}`,
       ),
     );
-    const simultaneousPlayerId = tournament.participantIds.find(
-      (id) =>
-        id !== playerId &&
-        tournament.eliminatedInHand[id] === handNumber &&
-        tournament.places[id] != null,
-    );
-    tournament.places[playerId] = simultaneousPlayerId
-      ? tournament.places[simultaneousPlayerId]!
-      : alive.length;
     tournament.eliminatedInHand[playerId] = handNumber;
+    const simultaneousPlayers = tournament.participantIds.filter(
+      (id) =>
+        tournament.eliminatedInHand[id] === handNumber &&
+        (id === playerId || tournament.places[id] != null),
+    );
+    const stackAtHandStart = (id: string): number => {
+      const savedStack = eliminationHand?.startingStacks?.[id];
+      if (Number.isSafeInteger(savedStack)) return savedStack!;
+      const handPlayer = eliminationHand?.players[id];
+      if (handPlayer && eliminationHand?.settlement) {
+        return (
+          (tournament.stacks[id] ?? 0) +
+          playerHandContribution(handPlayer) -
+          (eliminationHand.settlement.awards[id] ?? 0) -
+          (eliminationHand.settlement.refunds[id] ?? 0)
+        );
+      }
+      return tournament.stacks[id] ?? 0;
+    };
+    const sortedEliminations = simultaneousPlayers
+      .slice()
+      .sort(
+        (left, right) =>
+          stackAtHandStart(right) - stackAtHandStart(left) ||
+          tournament.participantIds.indexOf(left) -
+            tournament.participantIds.indexOf(right),
+      );
+    let groupOffset = 0;
+    while (groupOffset < sortedEliminations.length) {
+      const firstId = sortedEliminations[groupOffset]!;
+      const startingStack = stackAtHandStart(firstId);
+      let nextGroupOffset = groupOffset + 1;
+      while (
+        nextGroupOffset < sortedEliminations.length &&
+        stackAtHandStart(sortedEliminations[nextGroupOffset]!) === startingStack
+      ) {
+        nextGroupOffset += 1;
+      }
+      const place = alive.length + groupOffset;
+      for (const id of sortedEliminations.slice(groupOffset, nextGroupOffset))
+        tournament.places[id] = place;
+      groupOffset = nextGroupOffset;
+    }
 
     const survivors = alive.filter((id) => id !== playerId);
     if (survivors.length === 1) {

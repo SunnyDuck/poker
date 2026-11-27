@@ -39,6 +39,8 @@ export interface PokerHand {
   roles: HandRoles | null;
   /** Nominal blind at the start of this hand, independent of a short blind's stack. */
   bigBlind?: number;
+  /** Chip stacks before posting blinds; used to rank simultaneous eliminations. */
+  startingStacks?: Record<string, number>;
   potWinners?: Record<string, string[]>;
   settlement?: {
     awards: Record<string, number>;

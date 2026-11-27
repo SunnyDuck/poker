@@ -37,6 +37,7 @@ test("round-trips hand action amounts, seat order, roles and zero-valued actions
         street: "flop",
         settled: true,
         roles: { dealer: "b", smallBlind: "b", bigBlind: "a" },
+        startingStacks: { a: 1500, b: 1500 },
         players: {
           b: {
             bets: {

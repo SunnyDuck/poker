@@ -105,6 +105,14 @@ export const createPokerSyncController = () => {
         hand.street ??= "preflop";
         hand.settled ??= false;
         hand.roles ??= null;
+        if (!hand.startingStacks && !hand.settled) {
+          hand.startingStacks = Object.fromEntries(
+            Object.keys(hand.players).map((id) => [
+              id,
+              tournament.stacks[id] ?? 0,
+            ]),
+          );
+        }
         if (hand.bigBlind == null && !hand.settled) {
           const level = tournament.levels
             .slice(0, tournament.currentLevel + 1)
