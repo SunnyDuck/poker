@@ -114,6 +114,7 @@ const playerStatistics = computed(() =>
     })
     .sort(
       (a, b) =>
+        b.points - a.points ||
         b.wins - a.wins ||
         b.podiums - a.podiums ||
         b.handsWon - a.handsWon ||

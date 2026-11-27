@@ -109,7 +109,8 @@ test("runs a seeded six-player tournament and restores every hand from local and
     });
 
     const testNow = Date.parse("2026-11-24T12:00:00.000Z"); // 19:00 in Krasnoyarsk, before the rebuy cutoff.
-    const random = seededRandom(0x5eed1234);
+    const simulationSeed = Number(process.env.SIMULATION_SEED ?? 0x5eed1234);
+    const random = seededRandom(simulationSeed);
     const expectedInitialChips = players.length * tournament.startingStack;
     let expectedChips = expectedInitialChips;
 
@@ -233,6 +234,8 @@ test("runs a seeded six-player tournament and restores every hand from local and
           if (foldedCount === 0)
             store.setHandFolded(tournament, activeIds.at(-1), true);
           store.setHandFolded(tournament, playerIds[0], false);
+          if (!activeIds.some((playerId) => hand.players[playerId].folded))
+            store.setHandFolded(tournament, activeIds.at(-1), true);
         }
 
         for (let actionIndex = 0; actionIndex < 3; actionIndex += 1) {
@@ -580,7 +583,7 @@ test("runs a seeded six-player tournament and restores every hand from local and
           {
             simulation: {
               title: "Детерминированная тестовая игра на шесть участников",
-              seed: "0x5eed1234",
+              seed: `0x${simulationSeed.toString(16)}`,
               handCount: tournament.hands.length,
               rebuy: {
                 playerId: playerIds[5],
