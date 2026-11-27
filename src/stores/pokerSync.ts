@@ -28,7 +28,7 @@ export const createPokerSyncController = () => {
 
   const pendingSaveKey = "friendly-poker-pending-save";
 
-  const pollingIntervalMs = 30_000;
+  const pollingIntervalMs = 10_000;
 
   const saveDelayMs = 500;
 
