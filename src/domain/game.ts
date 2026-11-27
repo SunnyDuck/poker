@@ -540,7 +540,10 @@ export const playerInvestment = (
   playerId: string,
 ): number => {
   const rebuyCount = Math.max(0, tournament.rebuys[playerId] ?? 0);
-  return Math.max(0, tournament.buyIn) * (1 + rebuyCount);
+  return (
+    Math.max(0, tournament.buyIn) +
+    rebuyCount * Math.max(0, tournament.rebuyCost)
+  );
 };
 
 export const tournamentPrizePool = (tournament: Tournament): number => {
@@ -550,7 +553,7 @@ export const tournamentPrizePool = (tournament: Tournament): number => {
     (sum, count) => sum + Math.max(0, Number(count) || 0),
     0,
   );
-  return buyIns + rebuys * Math.max(0, tournament.buyIn);
+  return buyIns + rebuys * Math.max(0, tournament.rebuyCost);
 };
 
 export const tournamentChipsInPlay = (tournament: Tournament): number => {

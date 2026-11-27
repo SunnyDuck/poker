@@ -11,12 +11,14 @@ import {
   isPlayerVisibleOnStreet,
   nextHandActionIndex,
   playerCashout,
+  playerInvestment,
   playerNetBalance,
   postBlinds,
   projectedStack,
   rolesForHand,
   settlePokerHand,
   streetActionRequirements,
+  tournamentPrizePool,
 } from "../src/domain/game.ts";
 import type { Tournament } from "../src/domain/types.ts";
 
@@ -269,9 +271,13 @@ test("calculates player payouts and balances proportionally to chips and contrib
     stacks: { a: 3500, b: 1000 },
   });
 
-  assert.equal(playerCashout(game, "a"), 700);
-  assert.equal(playerCashout(game, "b"), 200);
-  assert.equal(playerCashout(game, "a") + playerCashout(game, "b"), 900);
-  assert.equal(playerNetBalance(game, "a"), 100);
-  assert.equal(playerNetBalance(game, "b"), -100);
+  assert.equal(playerInvestment(game, "a"), 400);
+  assert.equal(playerInvestment(game, "b"), 300);
+  assert.equal(tournamentPrizePool(game), 700);
+  assert.equal(
+    playerCashout(game, "a") + playerCashout(game, "b"),
+    tournamentPrizePool(game),
+  );
+  assert.ok(Math.abs(playerNetBalance(game, "a") - 144.4444444444) < 1e-8);
+  assert.ok(Math.abs(playerNetBalance(game, "b") + 144.4444444444) < 1e-8);
 });

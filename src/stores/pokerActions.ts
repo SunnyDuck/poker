@@ -561,11 +561,7 @@ export const createPokerActions = (state: DemoState) => {
       getCurrentHand(tournament)
     )
       return false;
-    if (
-      tournament.places[playerId] != null ||
-      (tournament.stacks[playerId] ?? 0) > 0
-    )
-      return false;
+    if (tournament.places[playerId] != null) return false;
     if ((tournament.rebuys[playerId] ?? 0) >= tournament.maxRebuys)
       return false;
     return isBeforeKrasnoyarskCutoff(
@@ -585,7 +581,8 @@ export const createPokerActions = (state: DemoState) => {
       tournament,
       makeCheckpoint(tournament, "rebuy", `Докупка: ${playerName(playerId)}`),
     );
-    tournament.stacks[playerId] = tournament.startingStack;
+    tournament.stacks[playerId] =
+      (tournament.stacks[playerId] ?? 0) + tournament.startingStack;
     tournament.rebuys[playerId] = (tournament.rebuys[playerId] ?? 0) + 1;
     return true;
   };

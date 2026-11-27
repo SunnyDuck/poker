@@ -689,7 +689,7 @@ const onRebuy = (playerId: string) => {
   if (
     !player ||
     !window.confirm(
-      `Добавить ${player.name} докупку за ${props.tournament.buyIn} ₽ и выдать ${props.tournament.startingStack} фишек?`,
+      `Добавить ${player.name} докупку за ${props.tournament.rebuyCost} ₽? К стеку ${props.tournament.stacks[playerId] ?? 0} будет добавлено ${props.tournament.startingStack} фишек.`,
     )
   )
     return;
@@ -1221,11 +1221,16 @@ const stageName = (street: HandStreet): string => {
               <template
                 v-if="
                   tournament.gameInitialized &&
-                  tournament.places[player.id] == null &&
-                  (tournament.stacks[player.id] ?? 0) === 0
+                  tournament.places[player.id] == null
                 "
               >
-                <span v-if="hand" class="muted">Ждём конца раздачи</span>
+                <span v-if="hand" class="muted">
+                  {{
+                    (tournament.stacks[player.id] ?? 0) === 0
+                      ? "Ждём конца раздачи"
+                      : "Раздача идёт"
+                  }}
+                </span>
                 <template v-else>
                   <button
                     v-if="pokerStore.canPlayerRebuy(tournament, player.id, now)"
@@ -1236,6 +1241,7 @@ const stageName = (street: HandStreet): string => {
                     ＋ Докупка
                   </button>
                   <button
+                    v-if="(tournament.stacks[player.id] ?? 0) === 0"
                     class="text-button danger-text"
                     type="button"
                     @click="onElimination(player.id)"

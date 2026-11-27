@@ -201,6 +201,29 @@ test("tournament regressions and a full eight-player game", async (testContext) 
     );
 
     await testContext.test(
+      "allows a rebuy before elimination and adds chips to the current stack",
+      () => {
+        const t = makeGame(2);
+        assert.equal(s.startTimer(t), true);
+        assert.equal(t.stacks[ids[0]], t.startingStack);
+        assert.equal(s.canPlayerRebuy(t, ids[0], now), true);
+        assert.equal(s.rebuyPlayer(t, ids[0], now), true);
+        assert.equal(t.stacks[ids[0]], t.startingStack * 2);
+        assert.equal(t.rebuys[ids[0]], 1);
+        assert.equal(
+          s.canPlayerRebuy(t, ids[0], now),
+          false,
+          "the configured rebuy limit still applies",
+        );
+
+        const handInProgress = makeGame(2);
+        assert.equal(s.startTimer(handInProgress), true);
+        assert.equal(s.startNextHand(handInProgress), true);
+        assert.equal(s.canPlayerRebuy(handInProgress, ids[0], now), false);
+      },
+    );
+
+    await testContext.test(
       "blocks deletion and roster edits after a game starts, including settled games",
       () => {
         const t = makeGame();
